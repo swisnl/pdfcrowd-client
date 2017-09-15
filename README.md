@@ -17,12 +17,19 @@ Via Composer
 $ composer require swisnl/pdfcrowd-client
 ```
 
+If you are using Laravel 5.0 - 5.4, add the following line to providers in `config/app.php`
+```php
+
+```
+
 ## Usage
 
 ``` php
 $skeleton = new Swis\PdfcrowdClient();
 echo $skeleton->echoPhrase('Hello, League!');
 ```
+
+A complete reference by Pdfcrowd is available at [http://pdfcrowd.com/web-html-to-pdf-php/](http://pdfcrowd.com/web-html-to-pdf-php/).
 
 ## Change log
 

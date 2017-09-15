@@ -1,6 +1,6 @@
 <?php
 
-namespace Swis\PdfcrowdClient;
+namespace Swis\PdfcrowdClient\Tests;
 
 class ExampleTest extends \PHPUnit\Framework\TestCase
 {
