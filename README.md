@@ -17,9 +17,18 @@ Via Composer
 $ composer require swisnl/pdfcrowd-client
 ```
 
-If you are using Laravel 5.0 - 5.4, add the following line to providers in `config/app.php`
-```php
+## Laravel
 
+We provide a service provider so you can use dependency injection of the Pdfcrowd class within your Laravel projects. If you don't use [package auto-discovery](https://laravel-news.com/package-auto-discovery), add the ServiceProvider to the providers array in config/app.php
+
+```php 
+Swis\PdfcrowdClient\PdfcrowdServiceProvider::class,
+```
+
+Then, publish the config file using:
+
+```php
+php artisan vendor:publish --provider="Swis\PdfcrowdClient\PdfcrowdServiceProvider"
 ```
 
 ## Usage
