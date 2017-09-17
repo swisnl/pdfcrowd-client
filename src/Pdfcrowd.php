@@ -6,20 +6,48 @@ namespace Swis\PdfcrowdClient;
 
 use CURLFile;
 use Swis\PdfcrowdClient\Exceptions\PdfcrowdException;
+use Swis\PdfcrowdClient\Http\CurlRequest;
+use Swis\PdfcrowdClient\Http\RequestInterface;
 
 class Pdfcrowd
 {
+    /** @var array */
     private $fields;
+
+    /** @var string */
     private $scheme;
+
+    /** @var int */
     private $port;
+
+    /** @var string */
     private $api_prefix;
+
+    /** @var int */
     private $curlopt_timeout;
+
+    /** @var string */
     private $hostname;
+
+    /** @var string */
     private $user_agent;
+
+    /** @var int */
     private $num_tokens_before;
+
+    /** @var int */
     private $http_code;
+
+    /** @var string */
     private $error;
+
     private $outstream;
+
+    /** @var string */
+    private $requestObjectClass = CurlRequest::class;
+
+    /* @var RequestInterface */
+    private $request;
 
     public static $client_version = '2.7';
     public static $http_port = 80;
@@ -66,6 +94,22 @@ class Pdfcrowd
         ];
 
         $this->user_agent = 'pdfcrowd_php_client_'.self::$client_version.'_(http://pdfcrowd.com)';
+    }
+
+    public function setRequestObject(string $requestObjectClass)
+    {
+        $this->requestObjectClass = $requestObjectClass;
+    }
+
+    protected function getNewRequestObject(): RequestInterface
+    {
+        $request = new $this->requestObjectClass;
+
+        if (!$request instanceof RequestInterface) {
+            throw new PdfcrowdException('Request object must extend the RequestInterface');
+        }
+
+        return $request;
     }
 
     /**
@@ -678,56 +722,54 @@ class Pdfcrowd
      */
     private function httpPost(string $url, $postfields, $outstream)
     {
-        // todo: add curl to dependencies
-        if (!function_exists('curl_init')) {
-            throw new PdfcrowdException('Curl php extension missing');
+        $this->request = $this->getNewRequestObject();
+
+        $this->request->setOption(CURLOPT_URL, $url);
+        $this->request->setOption(CURLOPT_HEADER, false);
+        $this->request->setOption(CURLOPT_CONNECTTIMEOUT, 10);
+        $this->request->setOption(CURLOPT_RETURNTRANSFER, true);
+        $this->request->setOption(CURLOPT_POST, true);
+        $this->request->setOption(CURLOPT_PORT, $this->port);
+        $this->request->setOption(CURLOPT_POSTFIELDS, $postfields);
+        $this->request->setOption(CURLOPT_DNS_USE_GLOBAL_CACHE, false);
+        $this->request->setOption(CURLOPT_USERAGENT, $this->user_agent);
+
+        if (isset($this->curlopt_timeout)) {
+            $this->request->setOption(CURLOPT_TIMEOUT, $this->curlopt_timeout);
         }
 
-        $c = curl_init();
-        curl_setopt($c, CURLOPT_URL, $url);
-        curl_setopt($c, CURLOPT_HEADER, false);
-        curl_setopt($c, CURLOPT_CONNECTTIMEOUT, 10);
-        curl_setopt($c, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($c, CURLOPT_POST, true);
-        curl_setopt($c, CURLOPT_PORT, $this->port);
-        curl_setopt($c, CURLOPT_POSTFIELDS, $postfields);
-        curl_setopt($c, CURLOPT_DNS_USE_GLOBAL_CACHE, false);
-        curl_setopt($c, CURLOPT_USERAGENT, $this->user_agent);
-        if (isset($this->curlopt_timeout)) {
-            curl_setopt($c, CURLOPT_TIMEOUT, $this->curlopt_timeout);
-        }
         if ($outstream) {
             $this->outstream = $outstream;
-            curl_setopt($c, CURLOPT_WRITEFUNCTION, [$this, 'receiveToStream']);
+            $this->request->setOption(CURLOPT_WRITEFUNCTION, [$this, 'receiveToStream']);
         }
 
         if ($this->scheme == 'https' && self::$api_host == 'pdfcrowd.com') {
-            curl_setopt($c, CURLOPT_SSL_VERIFYPEER, true);
+            $this->request->setOption(CURLOPT_SSL_VERIFYPEER, true);
         } else {
-            curl_setopt($c, CURLOPT_SSL_VERIFYPEER, false);
+            $this->request->setOption(CURLOPT_SSL_VERIFYPEER, false);
         }
 
         if ($this->proxy_name) {
-            curl_setopt($c, CURLOPT_PROXY, $this->proxy_name.':'.$this->proxy_port);
+            $this->request->setOption(CURLOPT_PROXY, $this->proxy_name.':'.$this->proxy_port);
             if ($this->proxy_username) {
-                curl_setopt($c, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-                curl_setopt($c, CURLOPT_PROXYUSERPWD, $this->proxy_username.':'.$this->proxy_password);
+                $this->request->setOption(CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+                $this->request->setOption(CURLOPT_PROXYUSERPWD, $this->proxy_username.':'.$this->proxy_password);
             }
         }
 
         $this->http_code = 0;
         $this->error = '';
 
-        $response = curl_exec($c);
-        $this->http_code = curl_getinfo($c, CURLINFO_HTTP_CODE);
-        $error_str = curl_error($c);
-        $error_nr = curl_errno($c);
-        curl_close($c);
+        $response = $this->request->execute();
+        $this->http_code = (int) $this->request->getInfo(CURLINFO_HTTP_CODE);
+        $error_str = $this->request->getErrorMessage();
+        $error_nr = (int) $this->request->getErrorNumber();
+        $this->request->close();
 
-        if ($error_nr != 0) {
+        if ($error_nr !== 0) {
             throw new PdfcrowdException($error_str, $error_nr);
-        } elseif ($this->http_code == 200) {
-            if ($outstream == null) {
+        } elseif ($this->http_code === 200) {
+            if ($outstream === null) {
                 return $response;
             }
         }
@@ -747,7 +789,7 @@ class Pdfcrowd
     private function receiveToStream($curl, $data)
     {
         if ($this->http_code == 0) {
-            $this->http_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+            $this->http_code = (int) curl_getinfo($curl, CURLINFO_HTTP_CODE);
         }
 
         if ($this->http_code >= 400) {
