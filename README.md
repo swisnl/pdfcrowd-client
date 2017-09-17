@@ -11,6 +11,8 @@ This is a API client for pdfcrowd.com. It is based on the [pdfcrowd/pdfcrowd-php
 
 ## Install
 
+> In order to make requests to the API you need to enable the PHP cURL library.
+
 Via Composer
 
 ``` bash
@@ -34,8 +36,17 @@ php artisan vendor:publish --provider="Swis\PdfcrowdClient\PdfcrowdServiceProvid
 ## Usage
 
 ``` php
-$skeleton = new Swis\PdfcrowdClient();
-echo $skeleton->echoPhrase('Hello, League!');
+# instantiate client, Laravel users can use dependency injection
+$client = new Pdfcrowd();
+
+# output PDF generated from HTML
+echo $client->convertHtml($someHtml);
+
+# write PDF to file handle from fopen() 
+$client->convertHtml($someHtml, $fileHandle);
+
+# retrieve the amount of tokens used by the previous conversion
+$tokens = $client->getUsedTokens(); 
 ```
 
 A complete reference by Pdfcrowd is available at [http://pdfcrowd.com/web-html-to-pdf-php/](http://pdfcrowd.com/web-html-to-pdf-php/).
