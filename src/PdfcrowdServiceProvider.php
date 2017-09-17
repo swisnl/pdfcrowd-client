@@ -19,7 +19,7 @@ class PdfcrowdServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        $this->mergeConfigFrom( __DIR__ . '/../config/pdfcrowd.php', 'pdfcrowd');
+        $this->mergeConfigFrom(__DIR__ . '/../config/pdfcrowd.php', 'pdfcrowd');
 
         $this->app->bind(\Swis\PdfcrowdClient\Pdfcrowd::class, function () {
             return new \Swis\PdfcrowdClient\Pdfcrowd(

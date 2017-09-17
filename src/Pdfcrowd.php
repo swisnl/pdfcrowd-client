@@ -89,7 +89,7 @@ class Pdfcrowd
 
         $this->num_tokens_before = $this->numTokens();
 
-        return $this->http_post($uri, $postfields, $outstream);
+        return $this->httpPost($uri, $postfields, $outstream);
     }
 
     /**
@@ -122,7 +122,9 @@ class Pdfcrowd
         }
 
         if (!is_readable($src)) {
-            throw new PdfcrowdException("convertFile(): cannot read '{$src}', please check if the process has sufficient permissions");
+            throw new PdfcrowdException(
+                "convertFile(): cannot read '{$src}', please check if the process has sufficient permissions"
+            );
         }
 
         if (!filesize($src)) {
@@ -139,7 +141,7 @@ class Pdfcrowd
 
         $this->num_tokens_before = $this->numTokens();
 
-        return $this->http_post($uri, $this->fields, $outstream);
+        return $this->httpPost($uri, $this->fields, $outstream);
     }
 
     /**
@@ -164,7 +166,7 @@ class Pdfcrowd
 
         $this->num_tokens_before = $this->numTokens();
 
-        return $this->http_post($uri, $postfields, $outstream);
+        return $this->httpPost($uri, $postfields, $outstream);
     }
 
     /**
@@ -179,7 +181,7 @@ class Pdfcrowd
         $arr = ['username' => $this->fields['username'],
                 'key' => $this->fields['key'], ];
         $postfields = http_build_query($arr, '', '&');
-        $ntokens = $this->http_post($uri, $postfields, null);
+        $ntokens = $this->httpPost($uri, $postfields, null);
 
         return (int) $ntokens;
     }
@@ -255,7 +257,7 @@ class Pdfcrowd
      */
     public function setEncrypted(bool $val = true)
     {
-        $this->set_or_unset($val, 'encrypted');
+        $this->setOrUnset($val, 'encrypted');
     }
 
     /**
@@ -266,7 +268,7 @@ class Pdfcrowd
      */
     public function setUserPassword(string $pwd)
     {
-        $this->set_or_unset($pwd, 'user_pwd');
+        $this->setOrUnset($pwd, 'user_pwd');
     }
 
     /**
@@ -277,7 +279,7 @@ class Pdfcrowd
      */
     public function setOwnerPassword(string $pwd)
     {
-        $this->set_or_unset($pwd, 'owner_pwd');
+        $this->setOrUnset($pwd, 'owner_pwd');
     }
 
     /**
@@ -287,7 +289,7 @@ class Pdfcrowd
      */
     public function setNoPrint(bool $val = true)
     {
-        $this->set_or_unset($val, 'no_print');
+        $this->setOrUnset($val, 'no_print');
     }
 
     /**
@@ -297,7 +299,7 @@ class Pdfcrowd
      */
     public function setNoModify(bool $val = true)
     {
-        $this->set_or_unset($val, 'no_modify');
+        $this->setOrUnset($val, 'no_modify');
     }
 
     /**
@@ -307,7 +309,7 @@ class Pdfcrowd
      */
     public function setNoCopy(bool $val = true)
     {
-        $this->set_or_unset($val, 'no_copy');
+        $this->setOrUnset($val, 'no_copy');
     }
 
     /**
@@ -347,7 +349,7 @@ class Pdfcrowd
      */
     public function setFooterText(string $value)
     {
-        $this->set_or_unset($value, 'footer_text');
+        $this->setOrUnset($value, 'footer_text');
     }
 
     /**
@@ -357,7 +359,7 @@ class Pdfcrowd
      */
     public function enableImages(bool $value = true)
     {
-        $this->set_or_unset(!$value, 'no_images');
+        $this->setOrUnset(!$value, 'no_images');
     }
 
     /**
@@ -367,7 +369,7 @@ class Pdfcrowd
      */
     public function enableBackgrounds(bool $value = true)
     {
-        $this->set_or_unset(!$value, 'no_backgrounds');
+        $this->setOrUnset(!$value, 'no_backgrounds');
     }
 
     /**
@@ -381,7 +383,7 @@ class Pdfcrowd
      */
     public function setHtmlZoom(int $value)
     {
-        $this->set_or_unset($value, 'html_zoom');
+        $this->setOrUnset($value, 'html_zoom');
     }
 
     /**
@@ -391,7 +393,7 @@ class Pdfcrowd
      */
     public function enableJavaScript(bool $value = true)
     {
-        $this->set_or_unset(!$value, 'no_javascript');
+        $this->setOrUnset(!$value, 'no_javascript');
     }
 
     /**
@@ -401,7 +403,7 @@ class Pdfcrowd
      */
     public function enableHyperlinks(bool $value = true)
     {
-        $this->set_or_unset(!$value, 'no_hyperlinks');
+        $this->setOrUnset(!$value, 'no_hyperlinks');
     }
 
     /**
@@ -411,7 +413,7 @@ class Pdfcrowd
      */
     public function setDefaultTextEncoding(string $value)
     {
-        $this->set_or_unset($value, 'text_encoding');
+        $this->setOrUnset($value, 'text_encoding');
     }
 
     /**
@@ -421,7 +423,7 @@ class Pdfcrowd
      */
     public function usePrintMedia(bool $value = true)
     {
-        $this->set_or_unset($value, 'use_print_media');
+        $this->setOrUnset($value, 'use_print_media');
     }
 
     /**
@@ -439,7 +441,7 @@ class Pdfcrowd
      */
     public function enablePdfcrowdLogo(bool $value = true)
     {
-        $this->set_or_unset($value, 'pdfcrowd_logo');
+        $this->setOrUnset($value, 'pdfcrowd_logo');
     }
 
     /**
@@ -570,7 +572,7 @@ class Pdfcrowd
      */
     public function setTransparentBackground(bool $value = true)
     {
-        $this->set_or_unset($value, 'transparent_background');
+        $this->setOrUnset($value, 'transparent_background');
     }
 
     /**
@@ -631,7 +633,7 @@ class Pdfcrowd
      */
     public function setWatermarkInBackground(bool $val = true)
     {
-        $this->set_or_unset($val, 'watermark_in_background');
+        $this->setOrUnset($val, 'watermark_in_background');
     }
 
     /**
@@ -674,7 +676,7 @@ class Pdfcrowd
      * @return mixed
      * @throws \Swis\PdfcrowdClient\Exceptions\PdfcrowdException
      */
-    private function http_post(string $url, $postfields, $outstream)
+    private function httpPost(string $url, $postfields, $outstream)
     {
         // todo: add curl to dependencies
         if (!function_exists('curl_init')) {
@@ -696,7 +698,7 @@ class Pdfcrowd
         }
         if ($outstream) {
             $this->outstream = $outstream;
-            curl_setopt($c, CURLOPT_WRITEFUNCTION, [$this, 'receive_to_stream']);
+            curl_setopt($c, CURLOPT_WRITEFUNCTION, [$this, 'receiveToStream']);
         }
 
         if ($this->scheme == 'https' && self::$api_host == 'pdfcrowd.com') {
@@ -742,7 +744,7 @@ class Pdfcrowd
      * @return bool|int
      * @throws \Swis\PdfcrowdClient\Exceptions\PdfcrowdException
      */
-    private function receive_to_stream($curl, $data)
+    private function receiveToStream($curl, $data)
     {
         if ($this->http_code == 0) {
             $this->http_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
@@ -757,8 +759,10 @@ class Pdfcrowd
         $written = fwrite($this->outstream, $data);
         if ($written != strlen($data)) {
             if (get_magic_quotes_runtime()) {
-                throw new PdfcrowdException("Cannot write the PDF file because the 'magic_quotes_runtime' setting is enabled.
-                            Please disable it either in your php.ini file, or in your code by calling 'set_magic_quotes_runtime(false)'.");
+                throw new PdfcrowdException("
+                    Cannot write the PDF file because the 'magic_quotes_runtime' setting is enabled. Please disable 
+                    it either in your php.ini file, or in your code by calling 'set_magic_quotes_runtime(false)'.
+                ");
             } else {
                 throw new PdfcrowdException('Writing the PDF file failed. The disk may be full.');
             }
@@ -773,7 +777,7 @@ class Pdfcrowd
      * @param mixed $val
      * @param string $field
      */
-    private function set_or_unset($val, string $field)
+    private function setOrUnset($val, string $field)
     {
         if ($val) {
             $this->fields[$field] = $val;
