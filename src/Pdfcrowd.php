@@ -262,7 +262,9 @@ class Pdfcrowd
     public function getUsedTokens(): int
     {
         if (!$this->track_tokens) {
-            throw new PdfcrowdException('getUsedTokens only works if you enable tracking tokens with trackTokens(true)');
+            throw new PdfcrowdException('
+                getUsedTokens only works if you enable tracking tokens with trackTokens(true)
+            ');
         }
 
         $num_tokens_after = $this->numTokens();
