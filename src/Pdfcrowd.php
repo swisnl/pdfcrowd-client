@@ -6,7 +6,8 @@ namespace Swis\PdfcrowdClient;
 
 use CURLFile;
 use Swis\PdfcrowdClient\Exceptions\PdfcrowdException;
-use Swis\PdfcrowdClient\Http\CurlRequest;
+use Swis\PdfcrowdClient\Http\FactoryInterface;
+use Swis\PdfcrowdClient\Http\RequestFactory;
 use Swis\PdfcrowdClient\Http\RequestInterface;
 
 class Pdfcrowd
@@ -43,11 +44,14 @@ class Pdfcrowd
 
     private $outstream;
 
-    /** @var string */
-    private $requestObjectClass = CurlRequest::class;
+    /** @var FactoryInterface */
+    protected $requestFactory;
 
     /* @var RequestInterface */
     private $request;
+
+    /** @var bool  */
+    private $track_tokens = false;
 
     public static $client_version = '2.7';
     public static $http_port = 80;
@@ -59,17 +63,14 @@ class Pdfcrowd
     private $proxy_username = '';
     private $proxy_password = '';
 
-    // constants for setPageLayout()
     const SINGLE_PAGE = 1;
     const CONTINUOUS = 2;
     const CONTINUOUS_FACING = 3;
 
-    // constants for setPageMode()
     const NONE_VISIBLE = 1;
     const THUMBNAILS_VISIBLE = 2;
     const FULLSCREEN = 3;
 
-    // constants for setInitialPdfZoomType()
     const FIT_WIDTH = 1;
     const FIT_HEIGHT = 2;
     const FIT_PAGE = 3;
@@ -94,16 +95,29 @@ class Pdfcrowd
         ];
 
         $this->user_agent = 'pdfcrowd_php_client_'.self::$client_version.'_(http://pdfcrowd.com)';
+
+        $this->requestFactory = new RequestFactory();
     }
 
-    public function setRequestObject(string $requestObjectClass)
+    /**
+     * This method allows you to override the default CurlRequest object. Added for testing purposes.
+     *
+     * @param \Swis\PdfcrowdClient\Http\FactoryInterface $requestFactory
+     */
+    public function setRequestFactory(FactoryInterface $requestFactory)
     {
-        $this->requestObjectClass = $requestObjectClass;
+        $this->requestFactory = $requestFactory;
     }
 
+    /**
+     * Each httpPost-call uses a clean request object.
+     *
+     * @return \Swis\PdfcrowdClient\Http\RequestInterface
+     * @throws \Swis\PdfcrowdClient\Exceptions\PdfcrowdException
+     */
     protected function getNewRequestObject(): RequestInterface
     {
-        $request = new $this->requestObjectClass;
+        $request = $this->requestFactory->create();
 
         if (!$request instanceof RequestInterface) {
             throw new PdfcrowdException('Request object must extend the RequestInterface');
@@ -131,7 +145,9 @@ class Pdfcrowd
         $uri = $this->api_prefix.'/pdf/convert/html/';
         $postfields = http_build_query($this->fields, '', '&');
 
-        $this->num_tokens_before = $this->numTokens();
+        if ($this->track_tokens) {
+            $this->num_tokens_before = $this->numTokens();
+        }
 
         return $this->httpPost($uri, $postfields, $outstream);
     }
@@ -183,7 +199,9 @@ class Pdfcrowd
 
         $uri = $this->api_prefix.'/pdf/convert/html/';
 
-        $this->num_tokens_before = $this->numTokens();
+        if ($this->track_tokens) {
+            $this->num_tokens_before = $this->numTokens();
+        }
 
         return $this->httpPost($uri, $this->fields, $outstream);
     }
@@ -208,7 +226,9 @@ class Pdfcrowd
         $uri = $this->api_prefix.'/pdf/convert/uri/';
         $postfields = http_build_query($this->fields, '', '&');
 
-        $this->num_tokens_before = $this->numTokens();
+        if ($this->track_tokens) {
+            $this->num_tokens_before = $this->numTokens();
+        }
 
         return $this->httpPost($uri, $postfields, $outstream);
     }
@@ -231,15 +251,36 @@ class Pdfcrowd
     }
 
     /**
-     * Get the number of tokens used in the last conversion
+     * Get the number of tokens used in the last conversion.
+     * This is only possible if you enable tracking tokens using trackTokens(true).
+     *
+     * @see trackTokens()
      *
      * @return int
+     * @throws \Swis\PdfcrowdClient\Exceptions\PdfcrowdException
      */
     public function getUsedTokens(): int
     {
+        if (!$this->track_tokens) {
+            throw new PdfcrowdException('getUsedTokens only works if you enable tracking tokens with trackTokens(true)');
+        }
+
         $num_tokens_after = $this->numTokens();
 
         return (int) $this->num_tokens_before - $num_tokens_after;
+    }
+
+    /**
+     * Track how many tokens are available before each request.
+     * After a request you can ask the number of used tokens with getUsedTokens.
+     *
+     * @see getUsedTokens()
+     *
+     * @param bool $trackTokens
+     */
+    public function trackTokens(bool $trackTokens = true)
+    {
+        $this->track_tokens = $trackTokens;
     }
 
     /**
