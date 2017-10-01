@@ -6,8 +6,8 @@ namespace Swis\PdfcrowdClient\Http;
 
 class RequestFactory implements FactoryInterface
 {
-    public function create()
+    public function create(): RequestInterface
     {
-        return new CurlRequest();
+        return new GuzzleRequest();
     }
 }

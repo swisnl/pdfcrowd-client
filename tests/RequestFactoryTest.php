@@ -2,8 +2,8 @@
 
 namespace Swis\PdfcrowdClient\Tests;
 
-use Swis\PdfcrowdClient\Http\CurlRequest;
 use Swis\PdfcrowdClient\Http\RequestFactory;
+use Swis\PdfcrowdClient\Http\RequestInterface;
 
 class RequestFactoryTest extends \PHPUnit\Framework\TestCase
 {
@@ -13,6 +13,6 @@ class RequestFactoryTest extends \PHPUnit\Framework\TestCase
 
         $requestObject = $factory->create();
 
-        $this->assertInstanceOf(CurlRequest::class, $requestObject);
+        $this->assertInstanceOf(RequestInterface::class, $requestObject);
     }
 }

@@ -8,9 +8,25 @@ interface RequestInterface
 {
     public function setOption($name, $value);
 
+    public function setUserAgent(string $userAgentString);
+
+    public function setTimeout(float $timeout);
+
+    public function setVerifySsl(bool $verify);
+
+    public function setProxy(string $proxy, int $port);
+
+    public function setProxyAuth(string $username, string $password);
+
+    public function setUrl(string $url);
+
+    public function setPort(int $port);
+
+    public function setBody(array $body);
+
     public function execute();
 
-    public function getInfo($name);
+    public function getHttpStatusCode(): int;
 
     public function getErrorMessage();
 

@@ -6,5 +6,5 @@ namespace Swis\PdfcrowdClient\Http;
 
 interface FactoryInterface
 {
-    public function create();
+    public function create(): RequestInterface;
 }

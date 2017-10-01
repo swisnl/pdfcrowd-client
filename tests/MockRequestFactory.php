@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Swis\PdfcrowdClient\Tests;
 
 use Swis\PdfcrowdClient\Http\FactoryInterface;
+use Swis\PdfcrowdClient\Http\RequestInterface;
 
 class MockRequestFactory implements FactoryInterface
 {
@@ -15,8 +16,8 @@ class MockRequestFactory implements FactoryInterface
         $this->items = $items;
     }
 
-    public function create()
+    public function create(): RequestInterface
     {
-        return reset($this->items);
+        return array_shift($this->items);
     }
 }

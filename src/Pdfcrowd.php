@@ -34,7 +34,7 @@ class Pdfcrowd
     private $user_agent;
 
     /** @var int */
-    private $num_tokens_before;
+    private $num_tokens_before = false;
 
     /** @var int */
     private $http_code;
@@ -87,6 +87,7 @@ class Pdfcrowd
 
         $this->useSSL(true);
 
+        // todo: rename fields to options
         $this->fields = [
             'username' => $username,
             'key' => $key,
@@ -142,14 +143,15 @@ class Pdfcrowd
         }
 
         $this->fields['src'] = $src;
+
+        // todo: create uri from prefx + constant value
         $uri = $this->api_prefix.'/pdf/convert/html/';
-        $postfields = http_build_query($this->fields, '', '&');
 
         if ($this->track_tokens) {
             $this->num_tokens_before = $this->numTokens();
         }
 
-        return $this->httpPost($uri, $postfields, $outstream);
+        return $this->httpPost($uri, $this->fields, $outstream);
     }
 
     /**
@@ -224,13 +226,12 @@ class Pdfcrowd
 
         $this->fields['src'] = $src;
         $uri = $this->api_prefix.'/pdf/convert/uri/';
-        $postfields = http_build_query($this->fields, '', '&');
 
         if ($this->track_tokens) {
             $this->num_tokens_before = $this->numTokens();
         }
 
-        return $this->httpPost($uri, $postfields, $outstream);
+        return $this->httpPost($uri, $this->fields, $outstream);
     }
 
     /**
@@ -242,12 +243,16 @@ class Pdfcrowd
     {
         $username = $this->fields['username'];
         $uri = $this->api_prefix."/user/{$username}/tokens/";
-        $arr = ['username' => $this->fields['username'],
-                'key' => $this->fields['key'], ];
-        $postfields = http_build_query($arr, '', '&');
-        $ntokens = $this->httpPost($uri, $postfields, null);
+        $arr = [
+            'username' => $this->fields['username'],
+            'key' => $this->fields['key'],
+        ];
 
-        return (int) $ntokens;
+        $ntokens = $this->httpPost($uri, $arr, null);
+
+        $response = (string) $ntokens;
+
+        return (int) $response;
     }
 
     /**
@@ -262,9 +267,15 @@ class Pdfcrowd
     public function getUsedTokens(): int
     {
         if (!$this->track_tokens) {
-            throw new PdfcrowdException('
-                getUsedTokens only works if you enable tracking tokens with trackTokens(true)
-            ');
+            throw new PdfcrowdException(
+                'getUsedTokens() only works if you enable tracking tokens with trackTokens(true)'
+            );
+        }
+
+        if ($this->num_tokens_before === false) {
+            throw new PdfcrowdException(
+                'getUsedTokens() should not be called on its own, call a convert call first.'
+            );
         }
 
         $num_tokens_after = $this->numTokens();
@@ -763,61 +774,64 @@ class Pdfcrowd
      * @return mixed
      * @throws \Swis\PdfcrowdClient\Exceptions\PdfcrowdException
      */
-    private function httpPost(string $url, $postfields, $outstream)
+    private function httpPost(string $url, array $postfields, $outstream)
     {
-        $this->request = $this->getNewRequestObject();
+        $this->request = $this->buildRequest($url, $postfields, $outstream);
 
-        $this->request->setOption(CURLOPT_URL, $url);
-        $this->request->setOption(CURLOPT_HEADER, false);
-        $this->request->setOption(CURLOPT_CONNECTTIMEOUT, 10);
-        $this->request->setOption(CURLOPT_RETURNTRANSFER, true);
-        $this->request->setOption(CURLOPT_POST, true);
-        $this->request->setOption(CURLOPT_PORT, $this->port);
-        $this->request->setOption(CURLOPT_POSTFIELDS, $postfields);
-        $this->request->setOption(CURLOPT_DNS_USE_GLOBAL_CACHE, false);
-        $this->request->setOption(CURLOPT_USERAGENT, $this->user_agent);
+        try {
+            $response = $this->request->execute();
+
+            $this->http_code = $this->request->getHttpStatusCode();
+        } catch (\Exception $e) {
+            throw new PdfcrowdException("Unknown error during request to Pdfcrowd", 0, $e);
+        } finally {
+            $this->request->close();
+        }
+
+        if ($this->http_code !== 200) {
+            throw new PdfcrowdException((string) $response, $this->http_code);
+        }
+
+        if ($outstream === null) {
+            return $response;
+        }
+    }
+
+    protected function buildRequest(string $url, array $postfields, $outstream)
+    {
+        $request = $this->getNewRequestObject();
+
+        $request->setUserAgent($this->user_agent);
 
         if (isset($this->curlopt_timeout)) {
-            $this->request->setOption(CURLOPT_TIMEOUT, $this->curlopt_timeout);
+            $request->setTimeout($this->curlopt_timeout);
         }
 
         if ($outstream) {
             $this->outstream = $outstream;
-            $this->request->setOption(CURLOPT_WRITEFUNCTION, [$this, 'receiveToStream']);
+            $request->setOption(CURLOPT_WRITEFUNCTION, [$this, 'receiveToStream']);
         }
 
         if ($this->scheme == 'https' && self::$api_host == 'pdfcrowd.com') {
-            $this->request->setOption(CURLOPT_SSL_VERIFYPEER, true);
+            $request->setVerifySsl(true);
         } else {
-            $this->request->setOption(CURLOPT_SSL_VERIFYPEER, false);
+            $request->setVerifySsl(false);
         }
 
         if ($this->proxy_name) {
-            $this->request->setOption(CURLOPT_PROXY, $this->proxy_name.':'.$this->proxy_port);
+            $request->setProxy($this->proxy_name, $this->proxy_port);
             if ($this->proxy_username) {
-                $this->request->setOption(CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-                $this->request->setOption(CURLOPT_PROXYUSERPWD, $this->proxy_username.':'.$this->proxy_password);
+                $request->setProxyAuth($this->proxy_username, $this->proxy_password);
             }
         }
 
-        $this->http_code = 0;
-        $this->error = '';
+        $request->setUrl($url);
 
-        $response = $this->request->execute();
-        $this->http_code = (int) $this->request->getInfo(CURLINFO_HTTP_CODE);
-        $error_str = $this->request->getErrorMessage();
-        $error_nr = (int) $this->request->getErrorNumber();
-        $this->request->close();
+        $request->setPort($this->port);
 
-        if ($error_nr !== 0) {
-            throw new PdfcrowdException($error_str, $error_nr);
-        } elseif ($this->http_code === 200) {
-            if ($outstream === null) {
-                return $response;
-            }
-        }
+        $request->setBody($postfields);
 
-        throw new PdfcrowdException($this->error ? $this->error : $response, $this->http_code);
+        return $request;
     }
 
     /**
