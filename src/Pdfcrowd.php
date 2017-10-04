@@ -797,7 +797,7 @@ class Pdfcrowd
         }
     }
 
-    protected function buildRequest(string $url, array $postfields, $outstream)
+    protected function buildRequest(string $url, array $postfields, $outstream): RequestInterface
     {
         $request = $this->getNewRequestObject();
 

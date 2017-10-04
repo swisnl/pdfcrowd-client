@@ -1,4 +1,6 @@
+.env
 .idea
 build
 composer.lock
 vendor
+phpunit.xml

@@ -29,8 +29,9 @@
         "illuminate/support": "5.*"
     },
     "require-dev": {
-        "phpunit/phpunit" : "~6.0",
-        "squizlabs/php_codesniffer": "^2.3"
+        "phpunit/phpunit": "~6.0",
+        "squizlabs/php_codesniffer": "^2.3",
+        "vlucas/phpdotenv": "^2.4"
     },
     "autoload": {
         "psr-4": {
