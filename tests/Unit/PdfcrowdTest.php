@@ -1,6 +1,6 @@
 <?php
 
-namespace Swis\PdfcrowdClient\Tests;
+namespace Swis\PdfcrowdClient\Tests\Unit;
 
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request;
@@ -8,6 +8,7 @@ use PHPUnit_Framework_MockObject_MockObject;
 use Swis\PdfcrowdClient\Exceptions\PdfcrowdException;
 use Swis\PdfcrowdClient\Http\RequestInterface;
 use Swis\PdfcrowdClient\Pdfcrowd;
+use Swis\PdfcrowdClient\Tests\Helpers\MockRequestFactory;
 
 class PdfcrowdTest extends BaseTestCase
 {
@@ -87,7 +88,7 @@ class PdfcrowdTest extends BaseTestCase
     {
         $this->setRequestMocks(1);
 
-        $outputFilename = __DIR__.'/data/html_to_file.txt';
+        $outputFilename = __DIR__.'/../data/html_to_file.txt';
         @unlink($outputFilename);
 
         $output_destination = fopen($outputFilename, 'w');

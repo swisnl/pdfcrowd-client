@@ -1,6 +1,6 @@
 <?php
 
-namespace Swis\PdfcrowdClient\Tests;
+namespace Swis\PdfcrowdClient\Tests\Exceptions;
 
 use PHPUnit\Framework\TestCase;
 use Swis\PdfcrowdClient\Exceptions\PdfcrowdException;

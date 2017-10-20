@@ -1,6 +1,6 @@
 <?php
 
-namespace Swis\PdfcrowdClient\Tests;
+namespace Swis\PdfcrowdClient\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
 

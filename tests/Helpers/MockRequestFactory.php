@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Swis\PdfcrowdClient\Tests;
+namespace Swis\PdfcrowdClient\Tests\Helpers;
 
 use Swis\PdfcrowdClient\Http\FactoryInterface;
 use Swis\PdfcrowdClient\Http\RequestInterface;

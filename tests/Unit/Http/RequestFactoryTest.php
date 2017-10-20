@@ -1,6 +1,6 @@
 <?php
 
-namespace Swis\PdfcrowdClient\Tests;
+namespace Swis\PdfcrowdClient\Tests\Http;
 
 use Swis\PdfcrowdClient\Http\RequestFactory;
 use Swis\PdfcrowdClient\Http\RequestInterface;
