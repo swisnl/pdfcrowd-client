@@ -9,11 +9,12 @@ $dotenv->load();
 
 $pdfcrowd = new Pdfcrowd(getenv('PDFCROWD_USERNAME'), getenv('PDFCROWD_KEY'));
 
-$filename = 'output/convert_html_output.pdf';
+$filename = 'output/html_to_file.pdf';
 $output_file = fopen($filename, 'w');
 
-$pdfcrowd->convertHtml(file_get_contents('data/example.html'), $output_file);
+$pdfcrowd->setOutputDestination($output_file);
+$pdfcrowd->convertHtml(file_get_contents('data/example.html'));
 
-echo "file was outputted to ".$filename;
+echo "file was outputted to ".$filename."\n";
 
 exit;

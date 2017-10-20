@@ -9,9 +9,12 @@ $dotenv->load();
 
 $pdfcrowd = new Pdfcrowd(getenv('PDFCROWD_USERNAME'), getenv('PDFCROWD_KEY'));
 
-header("Content-type:application/pdf");
-header("Content-Disposition:attachment;filename='html_to_output.pdf'");
+$filename = 'output/uri_to_file.pdf';
+$output_file = fopen($filename, 'w');
 
-echo $pdfcrowd->convertHtml(file_get_contents('data/example.html'));
+$pdfcrowd->setOutputDestination($output_file);
+$pdfcrowd->convertURI('https://google.com');
+
+echo "file was outputted to ".$filename."\n";
 
 exit;
