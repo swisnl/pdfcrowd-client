@@ -17,9 +17,6 @@ class Pdfcrowd
     /** @var string */
     private $scheme;
 
-    /** @var int */
-    private $port;
-
     /** @var string */
     private $api_prefix;
 
@@ -50,8 +47,6 @@ class Pdfcrowd
     protected $output_destination;
 
     public static $client_version = '2.7';
-    public static $http_port = 80;
-    public static $https_port = 443;
     public static $api_host = 'pdfcrowd.com';
 
     private $proxy_name;
@@ -254,10 +249,8 @@ class Pdfcrowd
     public function useSSL(bool $use_ssl)
     {
         if ($use_ssl) {
-            $this->port = self::$https_port;
             $this->scheme = 'https';
         } else {
-            $this->port = self::$http_port;
             $this->scheme = 'http';
         }
 
@@ -766,8 +759,6 @@ class Pdfcrowd
         }
 
         $request->setUrl($url);
-
-        $request->setPort($this->port);
 
         $request->setBody($requestBody);
 

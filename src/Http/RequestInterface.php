@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace Swis\PdfcrowdClient\Http;
 
+use GuzzleHttp\Client;
+
 interface RequestInterface
 {
+    public function setClient(Client $client);
+
     public function setUserAgent(string $userAgentString);
 
     public function setTimeout(float $timeout);
@@ -18,8 +22,6 @@ interface RequestInterface
 
     public function setUrl(string $url);
 
-    public function setPort(int $port);
-
     public function setBody(array $body);
 
     public function setOutputDestination($output_destination);
@@ -27,8 +29,4 @@ interface RequestInterface
     public function execute();
 
     public function getHttpStatusCode(): int;
-
-    public function getErrorMessage();
-
-    public function getErrorNumber();
 }

@@ -21,9 +21,6 @@ class GuzzleRequest implements RequestInterface
     /** @var \GuzzleHttp\Psr7\Response */
     protected $response;
 
-    /** @var int */
-    protected $port;
-
     /** @var string */
     protected $url;
 
@@ -33,6 +30,16 @@ class GuzzleRequest implements RequestInterface
 
         $this->requestOptions[RequestOptions::CONNECT_TIMEOUT] = 10;
         $this->requestOptions[RequestOptions::HTTP_ERRORS] = false;
+    }
+
+    /**
+     * Override the client, used for testing purposes.
+     *
+     * @param \GuzzleHttp\Client $client
+     */
+    public function setClient(Client $client)
+    {
+        $this->client = $client;
     }
 
     public function setUserAgent(string $userAgentString)
@@ -72,11 +79,6 @@ class GuzzleRequest implements RequestInterface
         $this->url = $url;
     }
 
-    public function setPort(int $port)
-    {
-        $this->port = $port;
-    }
-
     public function setBody(array $body)
     {
         $this->requestOptions[RequestOptions::FORM_PARAMS] = $body;
@@ -95,20 +97,6 @@ class GuzzleRequest implements RequestInterface
     }
 
     public function getHttpStatusCode(): int
-    {
-        return (int) $this->response->getStatusCode();
-    }
-
-    public function getErrorMessage()
-    {
-        try {
-            return (string) $this->response;
-        } catch (\Exception $e) {
-            return 'Unknown error.';
-        }
-    }
-
-    public function getErrorNumber()
     {
         return (int) $this->response->getStatusCode();
     }
