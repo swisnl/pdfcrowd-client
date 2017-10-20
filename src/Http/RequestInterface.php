@@ -24,6 +24,8 @@ interface RequestInterface
 
     public function setBody(array $body);
 
+    public function setOutputDestination($output_destination);
+
     public function execute();
 
     public function getHttpStatusCode(): int;

@@ -87,6 +87,11 @@ class GuzzleRequest implements RequestInterface
         $this->requestOptions[RequestOptions::FORM_PARAMS] = $body;
     }
 
+    public function setOutputDestination($output_destination)
+    {
+        $this->requestOptions[RequestOptions::SINK] = $output_destination;
+    }
+
     public function execute()
     {
         $this->response = $this->client->request('POST', $this->url, $this->requestOptions);

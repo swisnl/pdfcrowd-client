@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Swis\PdfcrowdClient;
 
-use CURLFile;
 use Swis\PdfcrowdClient\Exceptions\PdfcrowdException;
 use Swis\PdfcrowdClient\Http\FactoryInterface;
 use Swis\PdfcrowdClient\Http\RequestFactory;
@@ -39,11 +38,6 @@ class Pdfcrowd
     /** @var int */
     private $http_code;
 
-    /** @var string */
-    private $error;
-
-    private $outstream;
-
     /** @var FactoryInterface */
     protected $requestFactory;
 
@@ -53,13 +47,15 @@ class Pdfcrowd
     /** @var bool  */
     private $track_tokens = false;
 
+    protected $output_destination;
+
     public static $client_version = '2.7';
     public static $http_port = 80;
     public static $https_port = 443;
     public static $api_host = 'pdfcrowd.com';
 
-    private $proxy_name = null;
-    private $proxy_port = null;
+    private $proxy_name;
+    private $proxy_port;
     private $proxy_username = '';
     private $proxy_password = '';
 
@@ -131,12 +127,11 @@ class Pdfcrowd
      * Converts an in-memory html document.
      *
      * @param string $src       a string containing a html document
-     * @param null   $outstream output stream, if null then the return value is a string containing the PDF
      *
      * @return mixed
      * @throws \Swis\PdfcrowdClient\Exceptions\PdfcrowdException
      */
-    public function convertHtml($src, $outstream = null)
+    public function convertHtml($src)
     {
         if (!$src) {
             throw new PdfcrowdException('convertHTML(): the src parameter must not be empty');
@@ -144,80 +139,25 @@ class Pdfcrowd
 
         $this->fields['src'] = $src;
 
-        // todo: create uri from prefx + constant value
+        // todo: create uri from prefix + constant value
         $uri = $this->api_prefix.'/pdf/convert/html/';
 
         if ($this->track_tokens) {
             $this->num_tokens_before = $this->numTokens();
         }
 
-        return $this->httpPost($uri, $this->fields, $outstream);
-    }
-
-    /**
-     * Converts an in-memory html document.
-     *
-     * @param string $src       a path to an html file
-     * @param null   $outstream output stream, if null then the return value is a string containing the PDF
-     *
-     * @return mixed
-     * @throws \Swis\PdfcrowdClient\Exceptions\PdfcrowdException
-     */
-    public function convertFile(string $src, $outstream = null)
-    {
-        $src = trim($src);
-
-        if (!file_exists($src)) {
-            $cwd = getcwd();
-            throw new PdfcrowdException("convertFile(): '{$src}' not found
-                        Possible reasons:
-                         1. The file is missing.
-                         2. You misspelled the file name.
-                         3. You use a relative file path (e.g. 'index.html') but the current working
-                            directory is somewhere else than you expect: '${cwd}'
-                            Generally, it is safer to use an absolute file path instead of a relative one.
-                        ");
-        }
-
-        if (is_dir($src)) {
-            throw new PdfcrowdException("convertFile(): '{$src}' must be file, not a directory");
-        }
-
-        if (!is_readable($src)) {
-            throw new PdfcrowdException(
-                "convertFile(): cannot read '{$src}', please check if the process has sufficient permissions"
-            );
-        }
-
-        if (!filesize($src)) {
-            throw new PdfcrowdException("convertFile(): '{$src}' must not be empty");
-        }
-
-        if (version_compare(PHP_VERSION, '5.5.0') >= 0) {
-            $this->fields['src'] = new CurlFile($src);
-        } else {
-            $this->fields['src'] = '@'.$src;
-        }
-
-        $uri = $this->api_prefix.'/pdf/convert/html/';
-
-        if ($this->track_tokens) {
-            $this->num_tokens_before = $this->numTokens();
-        }
-
-        return $this->httpPost($uri, $this->fields, $outstream);
+        return $this->httpPost($uri, $this->fields);
     }
 
     /**
      * Converts a web page.
      *
      * @param string $src       a web page URL
-     * @param null   $outstream output stream, if null then the return value is a string containing the PDF
      *
      * @return mixed
      * @throws \Swis\PdfcrowdClient\Exceptions\PdfcrowdException
      */
-    public function convertURI(string $src, $outstream = null)
+    public function convertURI(string $src)
     {
         $src = trim($src);
         if (!preg_match("/^https?:\/\/.*/i", $src)) {
@@ -231,7 +171,7 @@ class Pdfcrowd
             $this->num_tokens_before = $this->numTokens();
         }
 
-        return $this->httpPost($uri, $this->fields, $outstream);
+        return $this->httpPost($uri, $this->fields);
     }
 
     /**
@@ -248,7 +188,7 @@ class Pdfcrowd
             'key' => $this->fields['key'],
         ];
 
-        $ntokens = $this->httpPost($uri, $arr, null);
+        $ntokens = $this->httpPost($uri, $arr);
 
         $response = (string) $ntokens;
 
@@ -294,6 +234,21 @@ class Pdfcrowd
     public function trackTokens(bool $trackTokens = true)
     {
         $this->track_tokens = $trackTokens;
+    }
+
+    /**
+     * Save the pdf to the given output destination. The variable $file_handle will serve as input to
+     * the sink-option of Guzzle.
+     *
+     * @see http://docs.guzzlephp.org/en/stable/request-options.html#sink
+     *
+     * @example $pdfcrowd->setOutputDestination(fopen('/path/to/output.pdf', 'w');
+     *
+     * @param $file_handle
+     */
+    public function setOutputDestination($file_handle)
+    {
+        $this->output_destination = $file_handle;
     }
 
     /**
@@ -768,15 +723,14 @@ class Pdfcrowd
 
     /**
      * @param string $url
-     * @param        $postfields
-     * @param        $outstream
+     * @param array  $postfields
      *
      * @return mixed
      * @throws \Swis\PdfcrowdClient\Exceptions\PdfcrowdException
      */
-    private function httpPost(string $url, array $postfields, $outstream)
+    private function httpPost(string $url, array $postfields)
     {
-        $this->request = $this->buildRequest($url, $postfields, $outstream);
+        $this->request = $this->buildRequest($url, $postfields);
 
         try {
             $response = $this->request->execute();
@@ -792,12 +746,10 @@ class Pdfcrowd
             throw new PdfcrowdException((string) $response, $this->http_code);
         }
 
-        if ($outstream === null) {
-            return $response;
-        }
+        return $response;
     }
 
-    protected function buildRequest(string $url, array $postfields, $outstream): RequestInterface
+    protected function buildRequest(string $url, array $postfields): RequestInterface
     {
         $request = $this->getNewRequestObject();
 
@@ -805,11 +757,6 @@ class Pdfcrowd
 
         if (isset($this->curlopt_timeout)) {
             $request->setTimeout($this->curlopt_timeout);
-        }
-
-        if ($outstream) {
-            $this->outstream = $outstream;
-            $request->setOption(CURLOPT_WRITEFUNCTION, [$this, 'receiveToStream']);
         }
 
         if ($this->scheme == 'https' && self::$api_host == 'pdfcrowd.com') {
@@ -831,43 +778,11 @@ class Pdfcrowd
 
         $request->setBody($postfields);
 
+        if (isset($this->output_destination)) {
+            $request->setOutputDestination($this->output_destination);
+        }
+
         return $request;
-    }
-
-    /**
-     * @see http://php.net/manual/en/function.curl-setopt.php and look for CURLOPT_WRITEFUNCTION
-     *
-     * @param $curl
-     * @param $data
-     *
-     * @return bool|int
-     * @throws \Swis\PdfcrowdClient\Exceptions\PdfcrowdException
-     */
-    private function receiveToStream($curl, $data)
-    {
-        if ($this->http_code == 0) {
-            $this->http_code = (int) curl_getinfo($curl, CURLINFO_HTTP_CODE);
-        }
-
-        if ($this->http_code >= 400) {
-            $this->error = $this->error.$data;
-
-            return strlen($data);
-        }
-
-        $written = fwrite($this->outstream, $data);
-        if ($written != strlen($data)) {
-            if (get_magic_quotes_runtime()) {
-                throw new PdfcrowdException("
-                    Cannot write the PDF file because the 'magic_quotes_runtime' setting is enabled. Please disable 
-                    it either in your php.ini file, or in your code by calling 'set_magic_quotes_runtime(false)'.
-                ");
-            } else {
-                throw new PdfcrowdException('Writing the PDF file failed. The disk may be full.');
-            }
-        }
-
-        return $written;
     }
 
     /**
