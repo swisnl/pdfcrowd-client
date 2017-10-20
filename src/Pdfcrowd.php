@@ -12,7 +12,7 @@ use Swis\PdfcrowdClient\Http\RequestInterface;
 class Pdfcrowd
 {
     /** @var array */
-    private $fields;
+    private $requestBody;
 
     /** @var string */
     private $scheme;
@@ -83,8 +83,7 @@ class Pdfcrowd
 
         $this->useSSL(true);
 
-        // todo: rename fields to options
-        $this->fields = [
+        $this->requestBody = [
             'username' => $username,
             'key' => $key,
             'pdf_scaling_factor' => 1,
@@ -133,7 +132,7 @@ class Pdfcrowd
             throw new PdfcrowdException('convertHTML(): the src parameter must not be empty');
         }
 
-        $this->fields['src'] = $src;
+        $this->requestBody['src'] = $src;
 
         // todo: create uri from prefix + constant value
         $uri = $this->api_prefix.'/pdf/convert/html/';
@@ -142,7 +141,7 @@ class Pdfcrowd
             $this->num_tokens_before = $this->numTokens();
         }
 
-        return $this->httpPost($uri, $this->fields);
+        return $this->httpPost($uri, $this->requestBody);
     }
 
     /**
@@ -160,14 +159,14 @@ class Pdfcrowd
             throw new PdfcrowdException("convertURI(): the URL must start with http:// or https:// (got '$src')");
         }
 
-        $this->fields['src'] = $src;
+        $this->requestBody['src'] = $src;
         $uri = $this->api_prefix.'/pdf/convert/uri/';
 
         if ($this->track_tokens) {
             $this->num_tokens_before = $this->numTokens();
         }
 
-        return $this->httpPost($uri, $this->fields);
+        return $this->httpPost($uri, $this->requestBody);
     }
 
     /**
@@ -177,11 +176,11 @@ class Pdfcrowd
      */
     public function numTokens(): int
     {
-        $username = $this->fields['username'];
+        $username = $this->requestBody['username'];
         $uri = $this->api_prefix."/user/{$username}/tokens/";
         $arr = [
-            'username' => $this->fields['username'],
-            'key' => $this->fields['key'],
+            'username' => $this->requestBody['username'],
+            'key' => $this->requestBody['key'],
         ];
 
         $ntokens = $this->httpPost($uri, $arr);
@@ -267,35 +266,35 @@ class Pdfcrowd
 
     public function setPageWidth($value)
     {
-        $this->fields['width'] = $value;
+        $this->requestBody['width'] = $value;
     }
 
     public function setPageHeight($value)
     {
-        $this->fields['height'] = $value;
+        $this->requestBody['height'] = $value;
     }
 
     public function setHorizontalMargin($value)
     {
-        $this->fields['margin_right'] = $this->fields['margin_left'] = $value;
+        $this->requestBody['margin_right'] = $this->requestBody['margin_left'] = $value;
     }
 
     public function setVerticalMargin($value)
     {
-        $this->fields['margin_top'] = $this->fields['margin_bottom'] = $value;
+        $this->requestBody['margin_top'] = $this->requestBody['margin_bottom'] = $value;
     }
 
     public function setBottomMargin($value)
     {
-        $this->fields['margin_bottom'] = $value;
+        $this->requestBody['margin_bottom'] = $value;
     }
 
     public function setPageMargins($top, $right, $bottom, $left)
     {
-        $this->fields['margin_top'] = $top;
-        $this->fields['margin_right'] = $right;
-        $this->fields['margin_bottom'] = $bottom;
-        $this->fields['margin_left'] = $left;
+        $this->requestBody['margin_top'] = $top;
+        $this->requestBody['margin_right'] = $right;
+        $this->requestBody['margin_bottom'] = $bottom;
+        $this->requestBody['margin_left'] = $left;
     }
 
     /**
@@ -374,7 +373,7 @@ class Pdfcrowd
     public function setPageLayout(int $value)
     {
         assert($value > 0 && $value <= 3);
-        $this->fields['page_layout'] = $value;
+        $this->requestBody['page_layout'] = $value;
     }
 
     /**
@@ -390,7 +389,7 @@ class Pdfcrowd
     public function setPageMode(int $value)
     {
         assert($value > 0 && $value <= 3);
-        $this->fields['page_mode'] = $value;
+        $this->requestBody['page_mode'] = $value;
     }
 
     /**
@@ -482,7 +481,7 @@ class Pdfcrowd
      */
     public function setMaxPages(int $value)
     {
-        $this->fields['max_pages'] = $value;
+        $this->requestBody['max_pages'] = $value;
     }
 
     /**
@@ -506,7 +505,7 @@ class Pdfcrowd
     public function setInitialPdfZoomType(int $value)
     {
         assert($value > 0 && $value <= 3);
-        $this->fields['initial_pdf_zoom_type'] = $value;
+        $this->requestBody['initial_pdf_zoom_type'] = $value;
     }
 
     /**
@@ -516,8 +515,8 @@ class Pdfcrowd
      */
     public function setInitialPdfExactZoom($value)
     {
-        $this->fields['initial_pdf_zoom_type'] = 4;
-        $this->fields['initial_pdf_zoom'] = $value;
+        $this->requestBody['initial_pdf_zoom_type'] = 4;
+        $this->requestBody['initial_pdf_zoom'] = $value;
     }
 
     /**
@@ -527,7 +526,7 @@ class Pdfcrowd
      */
     public function setPdfScalingFactor(float $value)
     {
-        $this->fields['pdf_scaling_factor'] = $value;
+        $this->requestBody['pdf_scaling_factor'] = $value;
     }
 
     /**
@@ -537,7 +536,7 @@ class Pdfcrowd
      */
     public function setAuthor(string $value)
     {
-        $this->fields['author'] = $value;
+        $this->requestBody['author'] = $value;
     }
 
     /**
@@ -548,7 +547,7 @@ class Pdfcrowd
      */
     public function setFailOnNon200(bool $value)
     {
-        $this->fields['fail_on_non200'] = $value;
+        $this->requestBody['fail_on_non200'] = $value;
     }
 
     /**
@@ -561,7 +560,7 @@ class Pdfcrowd
      */
     public function setFooterHtml(string $value)
     {
-        $this->fields['footer_html'] = $value;
+        $this->requestBody['footer_html'] = $value;
     }
 
     /**
@@ -574,7 +573,7 @@ class Pdfcrowd
      */
     public function setFooterUrl(string $value)
     {
-        $this->fields['footer_url'] = $value;
+        $this->requestBody['footer_url'] = $value;
     }
 
     /**
@@ -587,7 +586,7 @@ class Pdfcrowd
      */
     public function setHeaderHtml(string $value)
     {
-        $this->fields['header_html'] = $value;
+        $this->requestBody['header_html'] = $value;
     }
 
     /**
@@ -600,7 +599,7 @@ class Pdfcrowd
      */
     public function setHeaderUrl(string $value)
     {
-        $this->fields['header_url'] = $value;
+        $this->requestBody['header_url'] = $value;
     }
 
     /**
@@ -610,7 +609,7 @@ class Pdfcrowd
      */
     public function setPageBackgroundColor(string $value)
     {
-        $this->fields['page_background_color'] = $value;
+        $this->requestBody['page_background_color'] = $value;
     }
 
     /**
@@ -633,7 +632,7 @@ class Pdfcrowd
      */
     public function setPageNumberingOffset(int $value)
     {
-        $this->fields['page_numbering_offset'] = $value;
+        $this->requestBody['page_numbering_offset'] = $value;
     }
 
     /**
@@ -646,7 +645,7 @@ class Pdfcrowd
      */
     public function setHeaderFooterPageExcludeList(string $value)
     {
-        $this->fields['header_footer_page_exclude_list'] = $value;
+        $this->requestBody['header_footer_page_exclude_list'] = $value;
     }
 
     /**
@@ -659,9 +658,9 @@ class Pdfcrowd
      */
     public function setWatermark(string $url, $offset_x = 0, $offset_y = 0)
     {
-        $this->fields['watermark_url'] = $url;
-        $this->fields['watermark_offset_x'] = $offset_x;
-        $this->fields['watermark_offset_y'] = $offset_y;
+        $this->requestBody['watermark_url'] = $url;
+        $this->requestBody['watermark_offset_x'] = $offset_x;
+        $this->requestBody['watermark_offset_y'] = $offset_y;
     }
 
     /**
@@ -671,7 +670,7 @@ class Pdfcrowd
      */
     public function setWatermarkRotationsetWatermarkRotation(int $angle)
     {
-        $this->fields['watermark_rotation'] = $angle;
+        $this->requestBody['watermark_rotation'] = $angle;
     }
 
     /**
@@ -719,14 +718,14 @@ class Pdfcrowd
 
     /**
      * @param string $url
-     * @param array  $postfields
+     * @param array  $requestBody
      *
      * @return mixed
      * @throws \Swis\PdfcrowdClient\Exceptions\PdfcrowdException
      */
-    private function httpPost(string $url, array $postfields)
+    private function httpPost(string $url, array $requestBody)
     {
-        $this->request = $this->buildRequest($url, $postfields);
+        $this->request = $this->buildRequest($url, $requestBody);
 
         try {
             $response = $this->request->execute();
@@ -743,7 +742,7 @@ class Pdfcrowd
         return $response;
     }
 
-    protected function buildRequest(string $url, array $postfields): RequestInterface
+    protected function buildRequest(string $url, array $requestBody): RequestInterface
     {
         $request = $this->getNewRequestObject();
 
@@ -770,7 +769,7 @@ class Pdfcrowd
 
         $request->setPort($this->port);
 
-        $request->setBody($postfields);
+        $request->setBody($requestBody);
 
         if (isset($this->output_destination)) {
             $request->setOutputDestination($this->output_destination);
@@ -788,9 +787,9 @@ class Pdfcrowd
     private function setOrUnset($val, string $field)
     {
         if ($val) {
-            $this->fields[$field] = $val;
+            $this->requestBody[$field] = $val;
         } else {
-            unset($this->fields[$field]);
+            unset($this->requestBody[$field]);
         }
     }
 }
