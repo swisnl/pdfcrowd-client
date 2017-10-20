@@ -35,11 +35,6 @@ class GuzzleRequest implements RequestInterface
         $this->requestOptions[RequestOptions::HTTP_ERRORS] = false;
     }
 
-    public function setOption($name, $value)
-    {
-        // todo: implement
-    }
-
     public function setUserAgent(string $userAgentString)
     {
         if (!isset($this->requestOptions[RequestOptions::HEADERS])) {
@@ -116,10 +111,5 @@ class GuzzleRequest implements RequestInterface
     public function getErrorNumber()
     {
         return (int) $this->response->getStatusCode();
-    }
-
-    public function close()
-    {
-        // todo: this method should be deleted once we our done with Curl
     }
 }

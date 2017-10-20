@@ -734,8 +734,6 @@ class Pdfcrowd
             $this->http_code = $this->request->getHttpStatusCode();
         } catch (\Exception $e) {
             throw new PdfcrowdException("Unknown error during request to Pdfcrowd", 0, $e);
-        } finally {
-            $this->request->close();
         }
 
         if ($this->http_code !== 200) {

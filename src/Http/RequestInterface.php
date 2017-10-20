@@ -6,8 +6,6 @@ namespace Swis\PdfcrowdClient\Http;
 
 interface RequestInterface
 {
-    public function setOption($name, $value);
-
     public function setUserAgent(string $userAgentString);
 
     public function setTimeout(float $timeout);
@@ -33,6 +31,4 @@ interface RequestInterface
     public function getErrorMessage();
 
     public function getErrorNumber();
-
-    public function close();
 }

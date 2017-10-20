@@ -57,9 +57,6 @@ class PdfcrowdTest extends BaseTestCase
                     ->method('getHttpStatusCode')
                     ->willReturn(200);
 
-        $this->requestMocks[0]->expects($this->once())
-                    ->method('close');
-
         $pdf = $this->pdfcrowd->convertHtml('<html><body><h1>Testing 123.</h1></body></html>');
 
         $this->assertEquals($pdf, '123123');
@@ -80,9 +77,6 @@ class PdfcrowdTest extends BaseTestCase
         $this->requestMocks[0]->expects($this->once())
             ->method('getHttpStatusCode')
             ->willReturn(200);
-
-        $this->requestMocks[0]->expects($this->once())
-            ->method('close');
 
         $pdf = $this->pdfcrowd->convertUri('https://google.com');
 
@@ -114,9 +108,6 @@ class PdfcrowdTest extends BaseTestCase
             ->method('getHttpStatusCode')
             ->willReturn(200);
 
-        $this->requestMocks[0]->expects($this->once())
-            ->method('close');
-
         $this->pdfcrowd->setOutputDestination($output_destination);
 
         $pdf = $this->pdfcrowd->convertHtml('<html><body><h1>Testing 123.</h1></body></html>');
@@ -144,9 +135,6 @@ class PdfcrowdTest extends BaseTestCase
             ->method('getHttpStatusCode')
             ->willReturn(200);
 
-        $this->requestMocks[0]->expects($this->once())
-            ->method('close');
-
         $tokens = $this->pdfcrowd->numTokens();
 
         $this->assertEquals($tokens, '123123');
@@ -172,9 +160,6 @@ class PdfcrowdTest extends BaseTestCase
             ->method('getHttpStatusCode')
             ->willReturn(200);
 
-        $this->requestMocks[0]->expects($this->once())
-            ->method('close');
-
 
         // second request should convert html
 
@@ -190,9 +175,6 @@ class PdfcrowdTest extends BaseTestCase
             ->method('getHttpStatusCode')
             ->willReturn(200);
 
-        $this->requestMocks[1]->expects($this->once())
-            ->method('close');
-
 
         // third request should get number of tokens after actual request
 
@@ -207,9 +189,6 @@ class PdfcrowdTest extends BaseTestCase
         $this->requestMocks[2]->expects($this->once())
             ->method('getHttpStatusCode')
             ->willReturn(200);
-
-        $this->requestMocks[2]->expects($this->once())
-            ->method('close');
 
 
         $pdf = $this->pdfcrowd->convertHtml('<html><body><h1>Testing 123.</h1></body></html>');
@@ -238,9 +217,6 @@ class PdfcrowdTest extends BaseTestCase
             ->method('getHttpStatusCode')
             ->willReturn(200);
 
-        $this->requestMocks[0]->expects($this->once())
-            ->method('close');
-
 
         // second request should convert html
 
@@ -256,9 +232,6 @@ class PdfcrowdTest extends BaseTestCase
             ->method('getHttpStatusCode')
             ->willReturn(200);
 
-        $this->requestMocks[1]->expects($this->once())
-            ->method('close');
-
 
         // third request should get number of tokens after actual request
 
@@ -273,9 +246,6 @@ class PdfcrowdTest extends BaseTestCase
         $this->requestMocks[2]->expects($this->once())
             ->method('getHttpStatusCode')
             ->willReturn(200);
-
-        $this->requestMocks[2]->expects($this->once())
-            ->method('close');
 
 
         $pdf = $this->pdfcrowd->convertURI('https://google.com');
@@ -341,9 +311,6 @@ class PdfcrowdTest extends BaseTestCase
         $this->requestMocks[0]->expects($this->once())
             ->method('getHttpStatusCode')
             ->willReturn(404);
-
-        $this->requestMocks[0]->expects($this->once())
-            ->method('close');
 
         $this->expectException(PdfcrowdException::class);
         $this->expectExceptionCode(404);
