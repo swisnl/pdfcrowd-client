@@ -9,6 +9,16 @@
 
 This is a API client for pdfcrowd.com. It is based on the [pdfcrowd/pdfcrowd-php](https://github.com/pdfcrowd/pdfcrowd-php) project but adjusted for usage with Composer. It also includes a Laravel 5.* service provider and unit tests.
 
+## Work in progress
+
+This client is still under active development. The following issues will have to be fixed before a first release will be tagged:
+
+* Only allow requests over https
+* Hardcode the Pdfcrowd API url
+* Change the default user agent
+* Consider changing most class variables from private to protected
+* Maybe core functions (convertHtml, convertUri, availableTokens and getUsedTokes) should be separated from functions that configure the output. 
+
 ## Install
 
 > In order to make requests to the API you need to enable the PHP cURL library.
@@ -37,19 +47,28 @@ php artisan vendor:publish --provider="Swis\PdfcrowdClient\PdfcrowdServiceProvid
 
 ``` php
 # instantiate client, Laravel users can use dependency injection
-$client = new Pdfcrowd();
-
-# output PDF generated from HTML
+$client = new Pdfcrowd('username', 'api_key');
+ 
+# convert HTML to PDF and output
 echo $client->convertHtml($someHtml);
 
-# write PDF to file handle from fopen() 
-$client->convertHtml($someHtml, $fileHandle);
+# convert URI to PDF and output
+echo $client->convertUri('https://google.com');
+
+# convert to PDF and write to file
+$client->setOutputDestination(fopen('path/to/output.pdf', 'w');
+$client->convertHtml($someHtml);
+
+# retrieve the amount of available tokens
+$tokens = $client->availableTokens();
 
 # retrieve the amount of tokens used by the previous conversion
 $tokens = $client->getUsedTokens(); 
 ```
 
 A complete reference by Pdfcrowd is available at [http://pdfcrowd.com/web-html-to-pdf-php/](http://pdfcrowd.com/web-html-to-pdf-php/).
+
+Basic examples are available in [/examples](/examples).
 
 ## Change log
 

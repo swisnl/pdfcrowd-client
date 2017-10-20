@@ -138,7 +138,7 @@ class Pdfcrowd
         $uri = $this->api_prefix.'/pdf/convert/html/';
 
         if ($this->track_tokens) {
-            $this->num_tokens_before = $this->numTokens();
+            $this->num_tokens_before = $this->availableTokens();
         }
 
         return $this->httpPost($uri, $this->requestBody);
@@ -163,7 +163,7 @@ class Pdfcrowd
         $uri = $this->api_prefix.'/pdf/convert/uri/';
 
         if ($this->track_tokens) {
-            $this->num_tokens_before = $this->numTokens();
+            $this->num_tokens_before = $this->availableTokens();
         }
 
         return $this->httpPost($uri, $this->requestBody);
@@ -174,7 +174,7 @@ class Pdfcrowd
      *
      * @return int
      */
-    public function numTokens(): int
+    public function availableTokens(): int
     {
         $username = $this->requestBody['username'];
         $uri = $this->api_prefix."/user/{$username}/tokens/";
@@ -213,7 +213,7 @@ class Pdfcrowd
             );
         }
 
-        $num_tokens_after = $this->numTokens();
+        $num_tokens_after = $this->availableTokens();
 
         return (int) $this->num_tokens_before - $num_tokens_after;
     }

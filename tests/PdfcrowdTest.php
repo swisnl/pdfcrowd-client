@@ -135,7 +135,7 @@ class PdfcrowdTest extends BaseTestCase
             ->method('getHttpStatusCode')
             ->willReturn(200);
 
-        $tokens = $this->pdfcrowd->numTokens();
+        $tokens = $this->pdfcrowd->availableTokens();
 
         $this->assertEquals($tokens, '123123');
     }
