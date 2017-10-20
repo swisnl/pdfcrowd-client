@@ -7,7 +7,7 @@ use Swis\PdfcrowdClient\Http\RequestInterface;
 
 class RequestFactoryTest extends \PHPUnit\Framework\TestCase
 {
-    public function testRequestFactoryReturnsCurlRequestObject()
+    public function testRequestFactoryReturnsRequestInterface()
     {
         $factory = new RequestFactory();
 

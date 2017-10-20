@@ -116,10 +116,6 @@ class Pdfcrowd
     {
         $request = $this->requestFactory->create();
 
-        if (!$request instanceof RequestInterface) {
-            throw new PdfcrowdException('Request object must extend the RequestInterface');
-        }
-
         return $request;
     }
 

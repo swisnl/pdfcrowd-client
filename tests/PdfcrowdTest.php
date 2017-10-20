@@ -65,11 +65,66 @@ class PdfcrowdTest extends BaseTestCase
         $this->assertEquals($pdf, '123123');
     }
 
-    // todo: add a test for convertHtml using an outstream
+    public function testSuccessfulConvertUri()
+    {
+        $this->setRequestMocks(1);
 
-    // todo: add a test for convertUri
+        $this->requestMocks[0]->expects($this->once())
+            ->method('setUrl')
+            ->with('https://pdfcrowd.com/api/pdf/convert/uri/');
 
-    // todo: add a test for convertFile
+        $this->requestMocks[0]->expects($this->once())
+            ->method('execute')
+            ->willReturn('123123');
+
+        $this->requestMocks[0]->expects($this->once())
+            ->method('getHttpStatusCode')
+            ->willReturn(200);
+
+        $this->requestMocks[0]->expects($this->once())
+            ->method('close');
+
+        $pdf = $this->pdfcrowd->convertUri('https://google.com');
+
+        $this->assertEquals($pdf, '123123');
+    }
+
+    public function testSuccessfulConversionToOutputDestination()
+    {
+        $this->setRequestMocks(1);
+
+        $outputFilename = __DIR__.'/data/html_to_file.txt';
+        @unlink($outputFilename);
+
+        $output_destination = fopen($outputFilename, 'w');
+
+        $this->requestMocks[0]->expects($this->once())
+            ->method('setUrl')
+            ->with('https://pdfcrowd.com/api/pdf/convert/html/');
+
+        $this->requestMocks[0]->expects($this->once())
+            ->method('setOutputDestination')
+            ->with($output_destination);
+
+        $this->requestMocks[0]->expects($this->once())
+            ->method('execute')
+            ->willReturn('123123');
+
+        $this->requestMocks[0]->expects($this->once())
+            ->method('getHttpStatusCode')
+            ->willReturn(200);
+
+        $this->requestMocks[0]->expects($this->once())
+            ->method('close');
+
+        $this->pdfcrowd->setOutputDestination($output_destination);
+
+        $pdf = $this->pdfcrowd->convertHtml('<html><body><h1>Testing 123.</h1></body></html>');
+
+        $this->assertEquals($pdf, '123123');
+
+        @unlink($outputFilename);
+    }
 
     public function testRetrieveAvailableTokens()
     {
@@ -163,6 +218,72 @@ class PdfcrowdTest extends BaseTestCase
         $this->assertEquals($this->pdfcrowd->getUsedTokens(), 4);
     }
 
+    public function testItTracksTokensBeforeAndAfterConvertUri()
+    {
+        $this->pdfcrowd->trackTokens(true);
+
+        $this->setRequestMocks(3);
+
+        // first request should get number of tokens before actual request
+
+        $this->requestMocks[0]->expects($this->once())
+            ->method('setUrl')
+            ->with('https://pdfcrowd.com/api/user/username/tokens/');
+
+        $this->requestMocks[0]->expects($this->once())
+            ->method('execute')
+            ->willReturn('1337');
+
+        $this->requestMocks[0]->expects($this->once())
+            ->method('getHttpStatusCode')
+            ->willReturn(200);
+
+        $this->requestMocks[0]->expects($this->once())
+            ->method('close');
+
+
+        // second request should convert html
+
+        $this->requestMocks[1]->expects($this->once())
+            ->method('setUrl')
+            ->with('https://pdfcrowd.com/api/pdf/convert/uri/');
+
+        $this->requestMocks[1]->expects($this->once())
+            ->method('execute')
+            ->willReturn('123123');
+
+        $this->requestMocks[1]->expects($this->once())
+            ->method('getHttpStatusCode')
+            ->willReturn(200);
+
+        $this->requestMocks[1]->expects($this->once())
+            ->method('close');
+
+
+        // third request should get number of tokens after actual request
+
+        $this->requestMocks[2]->expects($this->once())
+            ->method('setUrl')
+            ->with('https://pdfcrowd.com/api/user/username/tokens/');
+
+        $this->requestMocks[2]->expects($this->once())
+            ->method('execute')
+            ->willReturn('1333');
+
+        $this->requestMocks[2]->expects($this->once())
+            ->method('getHttpStatusCode')
+            ->willReturn(200);
+
+        $this->requestMocks[2]->expects($this->once())
+            ->method('close');
+
+
+        $pdf = $this->pdfcrowd->convertURI('https://google.com');
+
+        $this->assertEquals($pdf, '123123');
+        $this->assertEquals($this->pdfcrowd->getUsedTokens(), 4);
+    }
+
     public function testItFailsToGetUsedTokensWithoutTrackingTokens()
     {
         $this->pdfcrowd->trackTokens(false);
@@ -229,6 +350,21 @@ class PdfcrowdTest extends BaseTestCase
         $this->expectExceptionMessage("myErorMessage");
 
         $this->pdfcrowd->convertHtml('<html><body><h1>Testing 123.</h1></body></html>');
+    }
+
+    public function testFailedConvertUriWithInvalidUri()
+    {
+        $this->setRequestMocks(1);
+
+        $this->requestMocks[0]->expects($this->never())
+            ->method('setUrl')
+            ->with('https://pdfcrowd.com/api/pdf/convert/uri/');
+
+        $this->expectException(PdfcrowdException::class);
+        $this->expectExceptionCode(0);
+        $this->expectExceptionMessage("convertURI(): the URL must start with http:// or https:// (got 'google.com')");
+
+        $this->pdfcrowd->convertUri('google.com');
     }
 
     public function testPostWithTimeout()
@@ -379,6 +515,52 @@ class PdfcrowdTest extends BaseTestCase
             ['setHeaderFooterPageExcludeList', ['1,-1'], 'header_footer_page_exclude_list', '1,-1'],
             ['setPageWidth', ['100'], 'width', '100'],
             ['setPageHeight', ['100'], 'height', '100'],
+            ['setHorizontalMargin', ['100'], 'margin_right', '100'],
+            ['setHorizontalMargin', ['100'], 'margin_left', '100'],
+            ['setVerticalMargin', ['100'], 'margin_top', '100'],
+            ['setVerticalMargin', ['100'], 'margin_bottom', '100'],
+            ['setBottomMargin', ['100'], 'margin_bottom', '100'],
+            ['setPageMargins', ['100', '200', '300', '400'], 'margin_top', '100'],
+            ['setPageMargins', ['100', '200', '300', '400'], 'margin_right', '200'],
+            ['setPageMargins', ['100', '200', '300', '400'], 'margin_bottom', '300'],
+            ['setPageMargins', ['100', '200', '300', '400'], 'margin_left', '400'],
+            ['setEncrypted', [true], 'encrypted', true],
+            ['setUserPassword', ['secret'], 'user_pwd', 'secret'],
+            ['setOwnerPassword', ['secret321'], 'owner_pwd', 'secret321'],
+            ['setNoPrint', [true], 'no_print', true],
+            ['setNoModify', [true], 'no_modify', true],
+            ['setNoCopy', [true], 'no_copy', true],
+            ['setPageLayout', [Pdfcrowd::SINGLE_PAGE], 'page_layout', Pdfcrowd::SINGLE_PAGE],
+            ['setPageLayout', [Pdfcrowd::CONTINUOUS], 'page_layout', Pdfcrowd::CONTINUOUS],
+            ['setPageLayout', [Pdfcrowd::CONTINUOUS_FACING], 'page_layout', Pdfcrowd::CONTINUOUS_FACING],
+            ['setPageMode', [Pdfcrowd::NONE_VISIBLE], 'page_mode', Pdfcrowd::NONE_VISIBLE],
+            ['setPageMode', [Pdfcrowd::THUMBNAILS_VISIBLE], 'page_mode', Pdfcrowd::THUMBNAILS_VISIBLE],
+            ['setPageMode', [Pdfcrowd::FULLSCREEN], 'page_mode', Pdfcrowd::FULLSCREEN],
+            ['setFooterText', ['test123'], 'footer_text', 'test123'],
+            ['enableImages', [false], 'no_images', true],
+            ['enableBackgrounds', [false], 'no_backgrounds', true],
+            ['setHtmlZoom', [true], 'html_zoom', true],
+            ['enableJavaScript', [false], 'no_javascript', true],
+            ['enableHyperlinks', [false], 'no_hyperlinks', true],
+            ['setDefaultTextEncoding', ['my-encoding'], 'text_encoding', 'my-encoding'],
+            ['usePrintMedia', [true], 'use_print_media', true],
+            ['setMaxPages', [3], 'max_pages', 3],
+            ['enablePdfcrowdLogo', [true], 'pdfcrowd_logo', true],
+            ['setInitialPdfZoomType', [Pdfcrowd::FIT_WIDTH], 'initial_pdf_zoom_type', Pdfcrowd::FIT_WIDTH],
+            ['setInitialPdfZoomType', [Pdfcrowd::FIT_HEIGHT], 'initial_pdf_zoom_type', Pdfcrowd::FIT_HEIGHT],
+            ['setInitialPdfZoomType', [Pdfcrowd::FIT_PAGE], 'initial_pdf_zoom_type', Pdfcrowd::FIT_PAGE],
+            ['setInitialPdfExactZoom', [123], 'initial_pdf_zoom_type', 4],
+            ['setInitialPdfExactZoom', [123], 'initial_pdf_zoom', 123],
+            ['setPdfScalingFactor', [1.23], 'pdf_scaling_factor', 1.23],
+            ['setAuthor', ['AuthorName'], 'author', 'AuthorName'],
+            ['setFailOnNon200', [true], 'fail_on_non200', true],
+            ['setFooterHtml', ['test123'], 'footer_html', 'test123'],
+            ['setFooterUrl', ['myUrl'], 'footer_url', 'myUrl'],
+            ['setHeaderHtml', ['test123'], 'header_html', 'test123'],
+            ['setHeaderUrl', ['myUrl'], 'header_url', 'myUrl'],
+            ['setPageBackgroundColor', ['#123456'], 'page_background_color', '#123456'],
+            ['setTransparentBackground', [true], 'transparent_background', true],
+            ['setPageNumberingOffset', [4], 'page_numbering_offset', 4],
         ];
     }
 
