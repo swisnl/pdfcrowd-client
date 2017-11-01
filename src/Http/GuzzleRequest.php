@@ -30,6 +30,7 @@ class GuzzleRequest implements RequestInterface
 
         $this->requestOptions[RequestOptions::CONNECT_TIMEOUT] = 10;
         $this->requestOptions[RequestOptions::HTTP_ERRORS] = false;
+        $this->requestOptions[RequestOptions::VERIFY] = true;
     }
 
     /**
@@ -54,11 +55,6 @@ class GuzzleRequest implements RequestInterface
     public function setTimeout(float $timeout)
     {
         $this->requestOptions[RequestOptions::TIMEOUT] = $timeout;
-    }
-
-    public function setVerifySsl(bool $verify)
-    {
-        $this->requestOptions[RequestOptions::VERIFY] = $verify;
     }
 
     public function setProxy(string $proxy, int $port)

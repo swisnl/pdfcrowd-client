@@ -38,6 +38,7 @@ class GuzzleRequestTest extends BaseTestCase
         $expectedRequestOptions = [
             RequestOptions::CONNECT_TIMEOUT => 10,
             RequestOptions::HTTP_ERRORS => false,
+            RequestOptions::VERIFY => true,
         ];
 
         return array_merge($expectedRequestOptions, $mergeOptions);
@@ -130,24 +131,6 @@ class GuzzleRequestTest extends BaseTestCase
             ->willReturn($this->mockResponse);
 
         $this->request->setTimeout($timeout);
-        $this->request->execute();
-    }
-
-    /**
-     * @covers \Swis\PdfcrowdClient\Http\GuzzleRequest::setVerifySsl()
-     */
-    public function testSetVerifySsl()
-    {
-        $expectedRequestOptions = $this->buildExpectedRequestOptions([
-            RequestOptions::VERIFY => true,
-        ]);
-
-        $this->mockClient->expects(self::once())
-            ->method('request')
-            ->with('POST', null, $expectedRequestOptions)
-            ->willReturn($this->mockResponse);
-
-        $this->request->setVerifySsl(true);
         $this->request->execute();
     }
 

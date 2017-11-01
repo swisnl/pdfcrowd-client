@@ -11,60 +11,61 @@ use Swis\PdfcrowdClient\Http\RequestInterface;
 
 class Pdfcrowd
 {
+    const CLIENT_VERSION = '0.1';
+    const API_PREFIX = 'https://pdfcrowd.com/api';
+
+    const PAGE_LAYOUT_SINGLE_PAGE = 1;
+    const PAGE_LAYOUT_CONTINUOUS = 2;
+    const PAGE_LAYOUT_CONTINUOUS_FACING = 3;
+
+    const PAGE_MODE_NONE_VISIBLE = 1;
+    const PAGE_MODE_THUMBNAILS_VISIBLE = 2;
+    const PAGE_MODE_FULLSCREEN = 3;
+
+    const INITIAL_PDF_ZOOM_TYPE_FIT_WIDTH = 1;
+    const INITIAL_PDF_ZOOM_TYPE_FIT_HEIGHT = 2;
+    const INITIAL_PDF_ZOOM_TYPE_FIT_PAGE = 3;
+
+    /*
+     * Request options
+     */
+
     /** @var array */
-    private $requestBody;
-
-    /** @var string */
-    private $scheme;
-
-    /** @var string */
-    private $api_prefix;
+    protected $requestBody;
 
     /** @var int */
-    private $curlopt_timeout;
+    protected $timeout;
 
     /** @var string */
-    private $hostname;
+    protected $user_agent;
+
+    /** @var mixed */
+    protected $output_destination;
 
     /** @var string */
-    private $user_agent;
+    protected $proxy_name;
 
     /** @var int */
-    private $num_tokens_before = false;
+    protected $proxy_port;
+
+    /** @var string  */
+    protected $proxy_username = '';
+
+    /** @var string  */
+    protected $proxy_password = '';
+
+    /*
+     * Tracking tokens
+     */
+
+    /** @var bool  */
+    protected $track_tokens = false;
 
     /** @var int */
-    private $http_code;
+    protected $num_tokens_before = false;
 
     /** @var FactoryInterface */
     protected $requestFactory;
-
-    /* @var RequestInterface */
-    private $request;
-
-    /** @var bool  */
-    private $track_tokens = false;
-
-    protected $output_destination;
-
-    public static $client_version = '2.7';
-    public static $api_host = 'pdfcrowd.com';
-
-    private $proxy_name;
-    private $proxy_port;
-    private $proxy_username = '';
-    private $proxy_password = '';
-
-    const SINGLE_PAGE = 1;
-    const CONTINUOUS = 2;
-    const CONTINUOUS_FACING = 3;
-
-    const NONE_VISIBLE = 1;
-    const THUMBNAILS_VISIBLE = 2;
-    const FULLSCREEN = 3;
-
-    const FIT_WIDTH = 1;
-    const FIT_HEIGHT = 2;
-    const FIT_PAGE = 3;
 
     /**
      * Pdfcrowd constructor.
@@ -74,10 +75,6 @@ class Pdfcrowd
      */
     public function __construct(string $username, string $key)
     {
-        $this->hostname = self::$api_host;
-
-        $this->useSSL(true);
-
         $this->requestBody = [
             'username' => $username,
             'key' => $key,
@@ -85,7 +82,7 @@ class Pdfcrowd
             'html_zoom' => 200,
         ];
 
-        $this->user_agent = 'pdfcrowd_php_client_'.self::$client_version.'_(http://pdfcrowd.com)';
+        $this->user_agent = $this->getUserAgent();
 
         $this->requestFactory = new RequestFactory();
     }
@@ -129,8 +126,7 @@ class Pdfcrowd
 
         $this->requestBody['src'] = $src;
 
-        // todo: create uri from prefix + constant value
-        $uri = $this->api_prefix.'/pdf/convert/html/';
+        $uri = $this->getApiUri('/pdf/convert/html/');
 
         if ($this->track_tokens) {
             $this->num_tokens_before = $this->availableTokens();
@@ -155,7 +151,7 @@ class Pdfcrowd
         }
 
         $this->requestBody['src'] = $src;
-        $uri = $this->api_prefix.'/pdf/convert/uri/';
+        $uri = $this->getApiUri('/pdf/convert/uri/');
 
         if ($this->track_tokens) {
             $this->num_tokens_before = $this->availableTokens();
@@ -172,7 +168,9 @@ class Pdfcrowd
     public function availableTokens(): int
     {
         $username = $this->requestBody['username'];
-        $uri = $this->api_prefix."/user/{$username}/tokens/";
+
+        $uri = $this->getApiUri("/user/{$username}/tokens/");
+
         $arr = [
             'username' => $this->requestBody['username'],
             'key' => $this->requestBody['key'],
@@ -239,22 +237,6 @@ class Pdfcrowd
     public function setOutputDestination($file_handle)
     {
         $this->output_destination = $file_handle;
-    }
-
-    /**
-     * Turn SSL on or off.
-     *
-     * @param bool $use_ssl
-     */
-    public function useSSL(bool $use_ssl)
-    {
-        if ($use_ssl) {
-            $this->scheme = 'https';
-        } else {
-            $this->scheme = 'http';
-        }
-
-        $this->api_prefix = "{$this->scheme}://{$this->hostname}/api";
     }
 
     public function setPageWidth($value)
@@ -362,10 +344,19 @@ class Pdfcrowd
      *   \Swis\PdfcrowdClient\Pdfcrowd::CONTINUOUS_FACING
      *
      * @param int $value
+     *
+     * @throws \Swis\PdfcrowdClient\Exceptions\PdfcrowdException
      */
     public function setPageLayout(int $value)
     {
-        assert($value > 0 && $value <= 3);
+        if (!in_array($value, [
+            self::PAGE_LAYOUT_SINGLE_PAGE,
+            self::PAGE_LAYOUT_CONTINUOUS,
+            self::PAGE_LAYOUT_CONTINUOUS_FACING
+        ])) {
+            throw new PdfcrowdException('Invalid page layout value!');
+        }
+
         $this->requestBody['page_layout'] = $value;
     }
 
@@ -375,13 +366,22 @@ class Pdfcrowd
      * Possible values:
      *   \Swis\PdfcrowdClient\Pdfcrowd::NONE_VISIBLE
      *   \Swis\PdfcrowdClient\Pdfcrowd::THUMBNAILS_VISIBLE
-     *   \Swis\PdfcrowdClient\Pdfcrowd::FULLSCREEN
+     *   \Swis\PdfcrowdClient\Pdfcrowd::PAGE_MODE_FULLSCREEN
      *
      * @param int $value
+     *
+     * @throws \Swis\PdfcrowdClient\Exceptions\PdfcrowdException
      */
     public function setPageMode(int $value)
     {
-        assert($value > 0 && $value <= 3);
+        if (!in_array($value, [
+            self::PAGE_MODE_NONE_VISIBLE,
+            self::PAGE_MODE_THUMBNAILS_VISIBLE,
+            self::PAGE_MODE_FULLSCREEN
+        ])) {
+            throw new PdfcrowdException('Invalid page mode value!');
+        }
+
         $this->requestBody['page_mode'] = $value;
     }
 
@@ -494,10 +494,19 @@ class Pdfcrowd
      *   \Swis\Pdfcrowd\Pdfcrowd::FIT_PAGE
      *
      * @param int $value
+     *
+     * @throws \Swis\PdfcrowdClient\Exceptions\PdfcrowdException
      */
     public function setInitialPdfZoomType(int $value)
     {
-        assert($value > 0 && $value <= 3);
+        if (!in_array($value, [
+            self::INITIAL_PDF_ZOOM_TYPE_FIT_WIDTH,
+            self::INITIAL_PDF_ZOOM_TYPE_FIT_HEIGHT,
+            self::INITIAL_PDF_ZOOM_TYPE_FIT_PAGE,
+        ])) {
+            throw new PdfcrowdException('Invalid initial pdf zoom type value!');
+        }
+
         $this->requestBody['initial_pdf_zoom_type'] = $value;
     }
 
@@ -692,6 +701,8 @@ class Pdfcrowd
     }
 
     /**
+     * Override the default user agent value that is sent with each request to the Pdfcrowd API.
+     *
      * @param string $user_agent
      */
     public function setUserAgent(string $user_agent)
@@ -700,12 +711,14 @@ class Pdfcrowd
     }
 
     /**
+     * Set the timeout request option.
+     *
      * @param int $timeout
      */
     public function setTimeout(int $timeout)
     {
         if (is_int($timeout) && $timeout > 0) {
-            $this->curlopt_timeout = $timeout;
+            $this->timeout = $timeout;
         }
     }
 
@@ -718,18 +731,18 @@ class Pdfcrowd
      */
     private function httpPost(string $url, array $requestBody)
     {
-        $this->request = $this->buildRequest($url, $requestBody);
+        $request = $this->buildRequest($url, $requestBody);
 
         try {
-            $response = $this->request->execute();
+            $response = $request->execute();
 
-            $this->http_code = $this->request->getHttpStatusCode();
+            $http_code = $request->getHttpStatusCode();
         } catch (\Exception $e) {
             throw new PdfcrowdException("Unknown error during request to Pdfcrowd", 0, $e);
         }
 
-        if ($this->http_code !== 200) {
-            throw new PdfcrowdException((string) $response, $this->http_code);
+        if ($http_code !== 200) {
+            throw new PdfcrowdException((string) $response, $http_code);
         }
 
         return $response;
@@ -741,14 +754,8 @@ class Pdfcrowd
 
         $request->setUserAgent($this->user_agent);
 
-        if (isset($this->curlopt_timeout)) {
-            $request->setTimeout($this->curlopt_timeout);
-        }
-
-        if ($this->scheme == 'https' && self::$api_host == 'pdfcrowd.com') {
-            $request->setVerifySsl(true);
-        } else {
-            $request->setVerifySsl(false);
+        if (isset($this->timeout)) {
+            $request->setTimeout($this->timeout);
         }
 
         if ($this->proxy_name) {
@@ -782,5 +789,20 @@ class Pdfcrowd
         } else {
             unset($this->requestBody[$field]);
         }
+    }
+
+    /**
+     * @param string $endpoint
+     *
+     * @return string
+     */
+    protected function getApiUri(string $endpoint): string
+    {
+        return self::API_PREFIX.$endpoint;
+    }
+
+    protected function getUserAgent()
+    {
+        return 'swisnl_pdfcrowd_client_'.self::CLIENT_VERSION;
     }
 }

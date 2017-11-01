@@ -377,46 +377,6 @@ class PdfcrowdTest extends BaseTestCase
         $this->pdfcrowd->convertHtml('<html><body><h1>Testing 123.</h1></body></html>');
     }
 
-    public function testPostUsesSSLByDefault()
-    {
-        $this->setRequestMocks(1);
-
-        $this->requestMocks[0]->expects($this->once())
-            ->method('setVerifySsl')
-            ->with(true);
-
-        $this->requestMocks[0]->expects($this->once())
-            ->method('execute')
-            ->willReturn('123123');
-
-        $this->requestMocks[0]->expects($this->once())
-            ->method('getHttpStatusCode')
-            ->willReturn(200);
-
-        $this->pdfcrowd->convertHtml('<html><body><h1>Testing 123.</h1></body></html>');
-    }
-
-    public function testPostWithoutSSL()
-    {
-        $this->pdfcrowd->useSSL(false);
-
-        $this->setRequestMocks(1);
-
-        $this->requestMocks[0]->expects($this->once())
-            ->method('setVerifySsl')
-            ->with(false);
-
-        $this->requestMocks[0]->expects($this->once())
-            ->method('execute')
-            ->willReturn('123123');
-
-        $this->requestMocks[0]->expects($this->once())
-            ->method('getHttpStatusCode')
-            ->willReturn(200);
-
-        $this->pdfcrowd->convertHtml('<html><body><h1>Testing 123.</h1></body></html>');
-    }
-
     public function testPostWithProxyAndPassword()
     {
         $this->pdfcrowd->setProxy('my-proxy-name', 123, 'my-username', 'my-password');
@@ -498,12 +458,12 @@ class PdfcrowdTest extends BaseTestCase
             ['setNoPrint', [true], 'no_print', true],
             ['setNoModify', [true], 'no_modify', true],
             ['setNoCopy', [true], 'no_copy', true],
-            ['setPageLayout', [Pdfcrowd::SINGLE_PAGE], 'page_layout', Pdfcrowd::SINGLE_PAGE],
-            ['setPageLayout', [Pdfcrowd::CONTINUOUS], 'page_layout', Pdfcrowd::CONTINUOUS],
-            ['setPageLayout', [Pdfcrowd::CONTINUOUS_FACING], 'page_layout', Pdfcrowd::CONTINUOUS_FACING],
-            ['setPageMode', [Pdfcrowd::NONE_VISIBLE], 'page_mode', Pdfcrowd::NONE_VISIBLE],
-            ['setPageMode', [Pdfcrowd::THUMBNAILS_VISIBLE], 'page_mode', Pdfcrowd::THUMBNAILS_VISIBLE],
-            ['setPageMode', [Pdfcrowd::FULLSCREEN], 'page_mode', Pdfcrowd::FULLSCREEN],
+            ['setPageLayout', [Pdfcrowd::PAGE_LAYOUT_SINGLE_PAGE], 'page_layout', Pdfcrowd::PAGE_LAYOUT_SINGLE_PAGE],
+            ['setPageLayout', [Pdfcrowd::PAGE_LAYOUT_CONTINUOUS], 'page_layout', Pdfcrowd::PAGE_LAYOUT_CONTINUOUS],
+            ['setPageLayout', [Pdfcrowd::PAGE_LAYOUT_CONTINUOUS_FACING], 'page_layout', Pdfcrowd::PAGE_LAYOUT_CONTINUOUS_FACING],
+            ['setPageMode', [Pdfcrowd::PAGE_MODE_NONE_VISIBLE], 'page_mode', Pdfcrowd::PAGE_MODE_NONE_VISIBLE],
+            ['setPageMode', [Pdfcrowd::PAGE_MODE_THUMBNAILS_VISIBLE], 'page_mode', Pdfcrowd::PAGE_MODE_THUMBNAILS_VISIBLE],
+            ['setPageMode', [Pdfcrowd::PAGE_MODE_FULLSCREEN], 'page_mode', Pdfcrowd::PAGE_MODE_FULLSCREEN],
             ['setFooterText', ['test123'], 'footer_text', 'test123'],
             ['enableImages', [false], 'no_images', true],
             ['enableBackgrounds', [false], 'no_backgrounds', true],
@@ -514,9 +474,9 @@ class PdfcrowdTest extends BaseTestCase
             ['usePrintMedia', [true], 'use_print_media', true],
             ['setMaxPages', [3], 'max_pages', 3],
             ['enablePdfcrowdLogo', [true], 'pdfcrowd_logo', true],
-            ['setInitialPdfZoomType', [Pdfcrowd::FIT_WIDTH], 'initial_pdf_zoom_type', Pdfcrowd::FIT_WIDTH],
-            ['setInitialPdfZoomType', [Pdfcrowd::FIT_HEIGHT], 'initial_pdf_zoom_type', Pdfcrowd::FIT_HEIGHT],
-            ['setInitialPdfZoomType', [Pdfcrowd::FIT_PAGE], 'initial_pdf_zoom_type', Pdfcrowd::FIT_PAGE],
+            ['setInitialPdfZoomType', [Pdfcrowd::INITIAL_PDF_ZOOM_TYPE_FIT_WIDTH], 'initial_pdf_zoom_type', Pdfcrowd::INITIAL_PDF_ZOOM_TYPE_FIT_WIDTH],
+            ['setInitialPdfZoomType', [Pdfcrowd::INITIAL_PDF_ZOOM_TYPE_FIT_HEIGHT], 'initial_pdf_zoom_type', Pdfcrowd::INITIAL_PDF_ZOOM_TYPE_FIT_HEIGHT],
+            ['setInitialPdfZoomType', [Pdfcrowd::INITIAL_PDF_ZOOM_TYPE_FIT_PAGE], 'initial_pdf_zoom_type', Pdfcrowd::INITIAL_PDF_ZOOM_TYPE_FIT_PAGE],
             ['setInitialPdfExactZoom', [123], 'initial_pdf_zoom_type', 4],
             ['setInitialPdfExactZoom', [123], 'initial_pdf_zoom', 123],
             ['setPdfScalingFactor', [1.23], 'pdf_scaling_factor', 1.23],
@@ -554,5 +514,34 @@ class PdfcrowdTest extends BaseTestCase
         $this->pdfcrowd->convertHtml('<html><body><h1>Testing 123.</h1></body></html>');
 
         $this->assertPostBodyDoesNotInclude($spy, 'watermark_in_background');
+    }
+
+    public function testSetPageLayoutWithInvalidValue()
+    {
+        $this->expectException(PdfcrowdException::class);
+
+        $this->expectExceptionMessage('Invalid page layout value!');
+
+        $this->pdfcrowd->setPageLayout(123);
+    }
+
+
+    public function testSetPageModeWithInvalidValue()
+    {
+        $this->expectException(PdfcrowdException::class);
+
+        $this->expectExceptionMessage('Invalid page mode value!');
+
+        $this->pdfcrowd->setPageMode(123);
+    }
+
+
+    public function testSetInitialPdfZoomTypeWithInvalidValue()
+    {
+        $this->expectException(PdfcrowdException::class);
+
+        $this->expectExceptionMessage('Invalid initial pdf zoom type value!');
+
+        $this->pdfcrowd->setInitialPdfZoomType(123);
     }
 }

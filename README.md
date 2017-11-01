@@ -11,13 +11,11 @@ This is a API client for pdfcrowd.com. It is based on the [pdfcrowd/pdfcrowd-php
 
 ## Work in progress
 
-This client is still under active development. The following issues will have to be fixed before a first release will be tagged:
-
-* Only allow requests over https
-* Hardcode the Pdfcrowd API url
-* Change the default user agent
-* Consider changing most class variables from private to protected
-* Maybe core functions (convertHtml, convertUri, availableTokens and getUsedTokes) should be separated from functions that configure the output. 
+This client is still under active development. What needs to be done:
+- Improve docs: in what way does this package differ from the original class?
+- Improve docs: add docblocks to all setters.
+- Improve docs: try to generate docs for complete class?
+- Tag a version and release!
 
 ## Install
 
@@ -51,17 +49,17 @@ $client = new Pdfcrowd('username', 'api_key');
  
 # convert HTML to PDF and output
 echo $client->convertHtml($someHtml);
-
+ 
 # convert URI to PDF and output
 echo $client->convertUri('https://google.com');
-
+ 
 # convert to PDF and write to file
 $client->setOutputDestination(fopen('path/to/output.pdf', 'w');
 $client->convertHtml($someHtml);
-
+ 
 # retrieve the amount of available tokens
 $tokens = $client->availableTokens();
-
+ 
 # retrieve the amount of tokens used by the previous conversion
 $tokens = $client->getUsedTokens(); 
 ```

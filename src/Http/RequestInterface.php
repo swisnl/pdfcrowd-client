@@ -14,8 +14,6 @@ interface RequestInterface
 
     public function setTimeout(float $timeout);
 
-    public function setVerifySsl(bool $verify);
-
     public function setProxy(string $proxy, int $port);
 
     public function setProxyAuth(string $username, string $password);
