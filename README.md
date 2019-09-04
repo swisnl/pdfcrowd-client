@@ -7,7 +7,7 @@
 [![Quality Score][ico-code-quality]][link-code-quality]
 [![Total Downloads][ico-downloads]][link-downloads]
 
-This is a API client for pdfcrowd.com. It is based on the [pdfcrowd/pdfcrowd-php](https://github.com/pdfcrowd/pdfcrowd-php) project but adjusted for usage with Composer. It also includes a Laravel 5.* service provider and unit tests.
+This is a API client for pdfcrowd.com. It is based on the [pdfcrowd/pdfcrowd-php](https://github.com/pdfcrowd/pdfcrowd-php) project but adjusted for usage with Composer. It also includes a Laravel service provider and unit tests.
 
 ## Work in progress
 
