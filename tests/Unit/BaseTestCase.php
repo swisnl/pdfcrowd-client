@@ -17,12 +17,15 @@ class BaseTestCase extends TestCase
     {
         /** @var \PHPUnit_Framework_MockObject_Invocation_Object $invocation */
         foreach ($spy->getInvocations() as $invocation) {
-            if ($invocation->methodName !== 'setBody') {
+
+            if ($invocation->getMethodName() !== 'setBody') {
                 continue;
             }
 
-            $this->assertArrayHasKey($option, $invocation->parameters[0], 'String '.$option.' not found in POST body');
-            $this->assertEquals($invocation->parameters[0][$option], $value);
+            $parameters = $invocation->getParameters();
+
+            $this->assertArrayHasKey($option, $parameters[0], 'String '.$option.' not found in POST body');
+            $this->assertEquals($parameters[0][$option], $value);
             return;
         }
 
@@ -39,11 +42,13 @@ class BaseTestCase extends TestCase
     {
         /** @var \PHPUnit_Framework_MockObject_Invocation_Object $invocation */
         foreach ($spy->getInvocations() as $invocation) {
-            if ($invocation->methodName !== 'setBody') {
+            if ($invocation->getMethodName() !== 'setBody') {
                 continue;
             }
 
-            $this->assertArrayNotHasKey($option, $invocation->parameters[0], 'String '.$option.' found in POST body, but it shouldn\'t be');
+            $parameters = $invocation->getParameters();
+
+            $this->assertArrayNotHasKey($option, $parameters[0], 'String '.$option.' found in POST body, but it shouldn\'t be');
             return;
         }
 
