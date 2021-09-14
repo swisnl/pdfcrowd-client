@@ -7,6 +7,11 @@
 [![Quality Score][ico-code-quality]][link-code-quality]
 [![Total Downloads][ico-downloads]][link-downloads]
 
+
+🚨 **THIS PACKAGE HAS BEEN ABANDONED** 🚨
+
+We don't use this package anymore in our own projects and there is an official package with Composer support, so that's why we have chosen to abandon it. We suggest using the official [pdfcrowd/pdfcrowd](https://github.com/pdfcrowd/pdfcrowd-php) package instead. Feel free to fork our code and maintain your own copy.
+
 This is a API client for pdfcrowd.com. It is based on the [pdfcrowd/pdfcrowd-php](https://github.com/pdfcrowd/pdfcrowd-php) project but adjusted for usage with Composer. It also includes a Laravel service provider and unit tests.
 
 ## Work in progress
